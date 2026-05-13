@@ -18,6 +18,7 @@ export const Route = createFileRoute("/admin/clients")({
 
 interface ClientRow {
   id: string; name: string; email: string;
+  logo_url: string | null;
   locations: { id: string; name: string }[];
   days: number[];
   article_ids: string[];
@@ -37,7 +38,7 @@ function ClientsAdmin() {
     const ids = (roleRows ?? []).map(r => r.user_id);
     if (!ids.length) { setClients([]); return; }
     const [{ data: profs }, { data: locs }, { data: days }, { data: cArts }, { data: arts }] = await Promise.all([
-      supabase.from("profiles").select("id, name, email").in("id", ids),
+      supabase.from("profiles").select("id, name, email, logo_url").in("id", ids),
       supabase.from("delivery_locations").select("id, client_id, name").in("client_id", ids),
       supabase.from("client_delivery_days").select("client_id, day_of_week").in("client_id", ids),
       supabase.from("client_articles").select("client_id, article_id").in("client_id", ids),
@@ -45,7 +46,7 @@ function ClientsAdmin() {
     ]);
     setArticles(arts ?? []);
     setClients((profs ?? []).map(p => ({
-      id: p.id, name: p.name, email: p.email,
+      id: p.id, name: p.name, email: p.email, logo_url: p.logo_url,
       locations: (locs ?? []).filter(l => l.client_id === p.id).map(l => ({ id: l.id, name: l.name })),
       days: (days ?? []).filter(d => d.client_id === p.id).map(d => d.day_of_week).sort(),
       article_ids: (cArts ?? []).filter(c => c.client_id === p.id).map(c => c.article_id),
