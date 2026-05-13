@@ -177,7 +177,18 @@ function AdminNewOrder() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Button size="icon" variant="outline" className="size-8" onClick={() => bump(a.id, -1)}><Minus className="size-3.5" /></Button>
-                  <span className="w-8 text-center text-sm font-mono tabular-nums">{qty[a.id] ?? 0}</span>
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    value={qty[a.id] ?? 0}
+                    onFocus={(e) => e.target.select()}
+                    onChange={(e) => {
+                      const n = parseInt(e.target.value, 10);
+                      setQty(q => ({ ...q, [a.id]: Number.isFinite(n) && n >= 0 ? n : 0 }));
+                    }}
+                    className="w-14 h-8 text-center text-sm font-mono tabular-nums rounded-md border border-input bg-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
                   <Button size="icon" variant="outline" className="size-8" onClick={() => bump(a.id, 1)}><Plus className="size-3.5" /></Button>
                 </div>
               </div>
