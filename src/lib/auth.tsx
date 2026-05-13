@@ -8,6 +8,7 @@ interface AuthState {
   user: User | null;
   session: Session | null;
   role: AppRole | null;
+  profile: { name: string; logo_url: string | null } | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
@@ -18,22 +19,28 @@ const AuthContext = createContext<AuthState | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
+  const [profile, setProfile] = useState<{ name: string; logo_url: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
-        // defer role fetch to avoid recursion
-        setTimeout(() => fetchRole(s.user.id), 0);
+        setTimeout(() => {
+          fetchRole(s.user.id);
+          fetchProfile(s.user.id);
+        }, 0);
       } else {
         setRole(null);
+        setProfile(null);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
-      if (data.session?.user) fetchRole(data.session.user.id);
-      else setLoading(false);
+      if (data.session?.user) {
+        fetchRole(data.session.user.id);
+        fetchProfile(data.session.user.id);
+      } else setLoading(false);
     });
     return () => sub.subscription.unsubscribe();
   }, []);
@@ -48,6 +55,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }
 
+  async function fetchProfile(userId: string) {
+    const { data } = await supabase
+      .from("profiles")
+      .select("name, logo_url")
+      .eq("id", userId)
+      .maybeSingle();
+    setProfile(data ? { name: data.name, logo_url: data.logo_url } : null);
+  }
+
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) return { error: error.message };
@@ -57,10 +73,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = async () => {
     await supabase.auth.signOut();
     setRole(null);
+    setProfile(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user: session?.user ?? null, session, role, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ user: session?.user ?? null, session, role, profile, loading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );
