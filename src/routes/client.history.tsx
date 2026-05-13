@@ -1,10 +1,11 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { STATUS_LABEL, STATUS_ROW_CLASS, STATUS_BADGE_CLASS, type OrderStatus } from "@/lib/orders";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { Pencil } from "lucide-react";
 
 export const Route = createFileRoute("/client/history")({
   component: History,
@@ -58,7 +59,14 @@ function History() {
                 <div className="font-medium mt-1">Livraison {format(new Date(r.delivery_date), "EEEE d MMM", { locale: fr })}</div>
                 <div className="text-sm text-muted-foreground">{r.location_name}</div>
               </div>
-              <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
+              <div className="flex items-center gap-2">
+                <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
+                {r.status === "todo" && (
+                  <Link to="/client/order" search={{ id: r.id }} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background hover:bg-accent">
+                    <Pencil className="size-3" /> Reprendre
+                  </Link>
+                )}
+              </div>
             </div>
             <div className="mt-3 text-sm">
               {r.lines.map((l, i) => <span key={i} className="inline-block mr-3"><span className="font-mono">{l.quantity}×</span> {l.name}</span>)}

@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, useSearch, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
@@ -6,12 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
-import { addDays, format, isSameDay } from "date-fns";
+import { addDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { Minus, Plus } from "lucide-react";
+import { Minus, Plus, Trash2 } from "lucide-react";
+import { z } from "zod";
+
+const searchSchema = z.object({ id: z.string().uuid().optional() });
 
 export const Route = createFileRoute("/client/order")({
   component: NewOrder,
+  validateSearch: (s) => searchSchema.parse(s),
 });
 
 interface Article { id: string; name: string; photo_url: string | null; }
@@ -20,6 +24,7 @@ interface Location { id: string; name: string; }
 function NewOrder() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { id: editId } = useSearch({ from: "/client/order" });
   const [locations, setLocations] = useState<Location[]>([]);
   const [days, setDays] = useState<number[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
@@ -27,6 +32,7 @@ function NewOrder() {
   const [date, setDate] = useState<string>("");
   const [qty, setQty] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState<boolean>(!!editId);
 
   useEffect(() => {
     if (!user) return;
@@ -39,11 +45,31 @@ function NewOrder() {
       setLocations(locs ?? []);
       setDays((ds ?? []).map(d => d.day_of_week));
       setArticles((cArts ?? []).map((c: any) => c.articles).filter(Boolean));
-      if (locs && locs.length) setLocationId(locs[0].id);
+      if (!editId && locs && locs.length) setLocationId(locs[0].id);
     })();
-  }, [user]);
+  }, [user, editId]);
 
-  // Available dates: next 6 weeks matching authorized days
+  // Load existing order to edit
+  useEffect(() => {
+    if (!editId || !user) return;
+    (async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("id, status, location_id, delivery_date, client_id, order_lines(article_id, quantity)")
+        .eq("id", editId)
+        .maybeSingle();
+      if (error || !data) { toast.error("Commande introuvable"); navigate({ to: "/client/history" }); return; }
+      if (data.client_id !== user.id) { toast.error("Accès refusé"); navigate({ to: "/client/history" }); return; }
+      if (data.status !== "todo") { toast.error("Cette commande n'est plus modifiable"); navigate({ to: "/client/history" }); return; }
+      setLocationId(data.location_id);
+      setDate(data.delivery_date);
+      const q: Record<string, number> = {};
+      for (const l of (data.order_lines ?? []) as any[]) q[l.article_id] = l.quantity;
+      setQty(q);
+      setLoadingEdit(false);
+    })();
+  }, [editId, user, navigate]);
+
   const availableDates = useMemo(() => {
     const out: Date[] = [];
     const start = new Date();
@@ -51,12 +77,16 @@ function NewOrder() {
       const d = addDays(start, i);
       if (days.includes(d.getDay())) out.push(d);
     }
+    // Ensure the currently-selected date (from edit) is selectable even if past today
+    if (date && !out.some(d => format(d, "yyyy-MM-dd") === date)) {
+      out.unshift(new Date(date));
+    }
     return out;
-  }, [days]);
+  }, [days, date]);
 
   useEffect(() => {
-    if (!date && availableDates.length) setDate(format(availableDates[0], "yyyy-MM-dd"));
-  }, [availableDates, date]);
+    if (!editId && !date && availableDates.length) setDate(format(availableDates[0], "yyyy-MM-dd"));
+  }, [availableDates, date, editId]);
 
   function bump(id: string, delta: number) {
     setQty(q => ({ ...q, [id]: Math.max(0, (q[id] ?? 0) + delta) }));
@@ -69,6 +99,22 @@ function NewOrder() {
     const lines = Object.entries(qty).filter(([, q]) => q > 0).map(([article_id, quantity]) => ({ article_id, quantity }));
     if (!lines.length) return toast.error("Ajoutez au moins un article");
     setSubmitting(true);
+
+    if (editId) {
+      const { error: eUp } = await supabase.from("orders")
+        .update({ location_id: locationId, delivery_date: date })
+        .eq("id", editId);
+      if (eUp) { setSubmitting(false); return toast.error(eUp.message); }
+      const { error: eDel } = await supabase.from("order_lines").delete().eq("order_id", editId);
+      if (eDel) { setSubmitting(false); return toast.error(eDel.message); }
+      const { error: eIns } = await supabase.from("order_lines").insert(lines.map(l => ({ ...l, order_id: editId })));
+      setSubmitting(false);
+      if (eIns) return toast.error(eIns.message);
+      toast.success("Commande mise à jour");
+      navigate({ to: "/client/history" });
+      return;
+    }
+
     const { data: order, error } = await supabase.from("orders")
       .insert({ client_id: user.id, location_id: locationId, delivery_date: date, status: "todo" })
       .select("id").single();
@@ -78,6 +124,19 @@ function NewOrder() {
     if (e2) return toast.error(e2.message);
     toast.success("Commande transmise");
     navigate({ to: "/client/history" });
+  }
+
+  async function remove() {
+    if (!editId) return;
+    if (!confirm("Supprimer cette commande ?")) return;
+    const { error } = await supabase.from("orders").delete().eq("id", editId);
+    if (error) return toast.error(error.message);
+    toast.success("Commande supprimée");
+    navigate({ to: "/client/history" });
+  }
+
+  if (loadingEdit) {
+    return <div className="text-sm text-muted-foreground p-8">Chargement…</div>;
   }
 
   if (!locations.length || !days.length || !articles.length) {
@@ -93,9 +152,18 @@ function NewOrder() {
   return (
     <div className="grid lg:grid-cols-12 gap-8">
       <div className="lg:col-span-8 space-y-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Nouvelle commande</h1>
-          <p className="text-sm text-muted-foreground mt-1">Une commande distincte par lieu de livraison.</p>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">{editId ? "Modifier la commande" : "Nouvelle commande"}</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              {editId ? "Vous pouvez modifier tant que la commande est À faire." : "Une commande distincte par lieu de livraison."}
+            </p>
+          </div>
+          {editId && (
+            <Link to="/client/order" className="text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground">
+              + Nouvelle commande
+            </Link>
+          )}
         </div>
 
         <div className="grid sm:grid-cols-2 gap-4 p-5 rounded-xl ring-1 ring-black/5 bg-card">
@@ -156,8 +224,13 @@ function NewOrder() {
             <div className="flex justify-between text-muted-foreground"><span>Articles</span><span className="text-foreground tabular-nums">{total}</span></div>
           </div>
           <Button className="w-full" disabled={submitting || total === 0} onClick={submit}>
-            {submitting ? "Envoi…" : "Valider la commande"}
+            {submitting ? "Envoi…" : editId ? "Enregistrer" : "Valider la commande"}
           </Button>
+          {editId && (
+            <Button variant="outline" className="w-full" onClick={remove}>
+              <Trash2 className="size-4 mr-1.5" /> Supprimer
+            </Button>
+          )}
         </div>
       </div>
     </div>
