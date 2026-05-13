@@ -16,6 +16,7 @@ function AdminLayout() {
       title="Admin"
       nav={[
         { label: "Commandes", to: "/admin/dashboard" },
+        { label: "Saisir", to: "/admin/new-order" },
         { label: "Catalogue", to: "/admin/catalog" },
         { label: "Clients", to: "/admin/clients" },
       ]}

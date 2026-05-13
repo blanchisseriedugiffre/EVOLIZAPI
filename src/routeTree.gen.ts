@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClientOrderRouteImport } from './routes/client.order'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
+import { Route as AdminNewOrderRouteImport } from './routes/admin.new-order'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminClientsRouteImport } from './routes/admin.clients'
 import { Route as AdminCatalogRouteImport } from './routes/admin.catalog'
@@ -49,6 +50,11 @@ const ClientHistoryRoute = ClientHistoryRouteImport.update({
   path: '/history',
   getParentRoute: () => ClientRoute,
 } as any)
+const AdminNewOrderRoute = AdminNewOrderRouteImport.update({
+  id: '/new-order',
+  path: '/new-order',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -73,6 +79,7 @@ export interface FileRoutesByFullPath {
   '/admin/catalog': typeof AdminCatalogRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/new-order': typeof AdminNewOrderRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
 }
@@ -84,6 +91,7 @@ export interface FileRoutesByTo {
   '/admin/catalog': typeof AdminCatalogRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/new-order': typeof AdminNewOrderRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
 }
@@ -96,6 +104,7 @@ export interface FileRoutesById {
   '/admin/catalog': typeof AdminCatalogRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/new-order': typeof AdminNewOrderRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
 }
@@ -109,6 +118,7 @@ export interface FileRouteTypes {
     | '/admin/catalog'
     | '/admin/clients'
     | '/admin/dashboard'
+    | '/admin/new-order'
     | '/client/history'
     | '/client/order'
   fileRoutesByTo: FileRoutesByTo
@@ -120,6 +130,7 @@ export interface FileRouteTypes {
     | '/admin/catalog'
     | '/admin/clients'
     | '/admin/dashboard'
+    | '/admin/new-order'
     | '/client/history'
     | '/client/order'
   id:
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
     | '/admin/catalog'
     | '/admin/clients'
     | '/admin/dashboard'
+    | '/admin/new-order'
     | '/client/history'
     | '/client/order'
   fileRoutesById: FileRoutesById
@@ -186,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientHistoryRouteImport
       parentRoute: typeof ClientRoute
     }
+    '/admin/new-order': {
+      id: '/admin/new-order'
+      path: '/new-order'
+      fullPath: '/admin/new-order'
+      preLoaderRoute: typeof AdminNewOrderRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/dashboard'
@@ -214,12 +233,14 @@ interface AdminRouteChildren {
   AdminCatalogRoute: typeof AdminCatalogRoute
   AdminClientsRoute: typeof AdminClientsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminNewOrderRoute: typeof AdminNewOrderRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
   AdminCatalogRoute: AdminCatalogRoute,
   AdminClientsRoute: AdminClientsRoute,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminNewOrderRoute: AdminNewOrderRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
@@ -246,3 +267,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
