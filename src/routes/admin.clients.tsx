@@ -197,6 +197,28 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
     <div className="space-y-6">
       <div className="space-y-1.5"><Label>Nom affiché</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
 
+      <div className="space-y-2">
+        <Label>Logo du client</Label>
+        <div className="flex items-center gap-4">
+          <div className="size-16 rounded-md ring-1 ring-border bg-muted overflow-hidden grid place-items-center">
+            {logoUrl
+              ? <img src={logoUrl} alt="Logo" className="size-full object-cover" />
+              : <span className="text-[9px] uppercase tracking-widest text-muted-foreground">logo</span>}
+          </div>
+          <div className="flex items-center gap-2">
+            <Input type="file" accept="image/*" disabled={uploading}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.currentTarget.value = ""; }}
+              className="max-w-xs" />
+            {logoUrl && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl(null)}>
+                <X className="size-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        {uploading && <p className="text-xs text-muted-foreground">Téléversement…</p>}
+      </div>
+
       <div>
         <Label className="mb-2 block">Lieux de livraison ({locations.length}/10)</Label>
         <div className="space-y-2">
