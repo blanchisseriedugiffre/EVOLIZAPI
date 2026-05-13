@@ -18,6 +18,7 @@ export const Route = createFileRoute("/admin/clients")({
 
 interface ClientRow {
   id: string; name: string; email: string;
+  logo_url: string | null;
   locations: { id: string; name: string }[];
   days: number[];
   article_ids: string[];
@@ -37,7 +38,7 @@ function ClientsAdmin() {
     const ids = (roleRows ?? []).map(r => r.user_id);
     if (!ids.length) { setClients([]); return; }
     const [{ data: profs }, { data: locs }, { data: days }, { data: cArts }, { data: arts }] = await Promise.all([
-      supabase.from("profiles").select("id, name, email").in("id", ids),
+      supabase.from("profiles").select("id, name, email, logo_url").in("id", ids),
       supabase.from("delivery_locations").select("id, client_id, name").in("client_id", ids),
       supabase.from("client_delivery_days").select("client_id, day_of_week").in("client_id", ids),
       supabase.from("client_articles").select("client_id, article_id").in("client_id", ids),
@@ -45,7 +46,7 @@ function ClientsAdmin() {
     ]);
     setArticles(arts ?? []);
     setClients((profs ?? []).map(p => ({
-      id: p.id, name: p.name, email: p.email,
+      id: p.id, name: p.name, email: p.email, logo_url: p.logo_url,
       locations: (locs ?? []).filter(l => l.client_id === p.id).map(l => ({ id: l.id, name: l.name })),
       days: (days ?? []).filter(d => d.client_id === p.id).map(d => d.day_of_week).sort(),
       article_ids: (cArts ?? []).filter(c => c.client_id === p.id).map(c => c.article_id),
@@ -139,6 +140,8 @@ function CreateClientForm({ onCreated, createFn }: { onCreated: () => void; crea
 
 function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articles: { id: string; name: string }[]; onSaved: () => void }) {
   const [name, setName] = useState(client.name);
+  const [logoUrl, setLogoUrl] = useState<string | null>(client.logo_url);
+  const [uploading, setUploading] = useState(false);
   const [locations, setLocations] = useState(client.locations);
   const [newLoc, setNewLoc] = useState("");
   const [days, setDays] = useState<number[]>(client.days);
@@ -154,9 +157,21 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
   }
   function removeLoc(id: string) { setLocations(locations.filter(l => l.id !== id)); }
 
+  async function uploadLogo(file: File) {
+    if (file.size > 4 * 1024 * 1024) { toast.error("Image trop lourde (max 4 Mo)"); return; }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `${client.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("client-logos").upload(path, file, { upsert: true, contentType: file.type });
+    if (error) { setUploading(false); return toast.error(error.message); }
+    const { data } = supabase.storage.from("client-logos").getPublicUrl(path);
+    setLogoUrl(data.publicUrl);
+    setUploading(false);
+  }
+
   async function save() {
     setSaving(true);
-    await supabase.from("profiles").update({ name }).eq("id", client.id);
+    await supabase.from("profiles").update({ name, logo_url: logoUrl }).eq("id", client.id);
 
     // Locations: replace all (delete those missing, insert new)
     const existing = client.locations.map(l => l.id);
@@ -181,6 +196,28 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
   return (
     <div className="space-y-6">
       <div className="space-y-1.5"><Label>Nom affiché</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
+
+      <div className="space-y-2">
+        <Label>Logo du client</Label>
+        <div className="flex items-center gap-4">
+          <div className="size-16 rounded-md ring-1 ring-border bg-muted overflow-hidden grid place-items-center">
+            {logoUrl
+              ? <img src={logoUrl} alt="Logo" className="size-full object-cover" />
+              : <span className="text-[9px] uppercase tracking-widest text-muted-foreground">logo</span>}
+          </div>
+          <div className="flex items-center gap-2">
+            <Input type="file" accept="image/*" disabled={uploading}
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.currentTarget.value = ""; }}
+              className="max-w-xs" />
+            {logoUrl && (
+              <Button type="button" variant="ghost" size="sm" onClick={() => setLogoUrl(null)}>
+                <X className="size-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        {uploading && <p className="text-xs text-muted-foreground">Téléversement…</p>}
+      </div>
 
       <div>
         <Label className="mb-2 block">Lieux de livraison ({locations.length}/10)</Label>

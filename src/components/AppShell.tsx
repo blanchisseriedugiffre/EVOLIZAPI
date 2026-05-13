@@ -15,7 +15,7 @@ export function AppShell({
   nav: NavItem[];
   children: ReactNode;
 }) {
-  const { signOut, user } = useAuth();
+  const { signOut, user, profile } = useAuth();
   const navigate = useNavigate();
   const path = useRouterState({ select: (s) => s.location.pathname });
 
@@ -24,7 +24,12 @@ export function AppShell({
       <header className="border-b border-border bg-card/50 backdrop-blur">
         <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between gap-6">
           <div className="flex items-center gap-8">
-            <Link to="/" className="font-semibold tracking-tight text-sm">Atelier · {title}</Link>
+            <Link to="/" className="font-semibold tracking-tight text-sm flex items-center gap-2.5">
+              {profile?.logo_url ? (
+                <img src={profile.logo_url} alt="" className="size-7 rounded-md object-cover ring-1 ring-border" />
+              ) : null}
+              <span>{profile?.name ? profile.name : `Atelier · ${title}`}</span>
+            </Link>
             <nav className="hidden md:flex items-center gap-1 text-sm">
               {nav.map((n) => {
                 const active = path.startsWith(n.to);
