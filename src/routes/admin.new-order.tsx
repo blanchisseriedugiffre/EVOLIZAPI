@@ -32,15 +32,13 @@ function AdminNewOrder() {
 
   useEffect(() => {
     (async () => {
-      // List clients (profiles with role 'client')
-      const { data: roles } = await supabase
-        .from("user_roles")
-        .select("user_id, profiles!inner(id, name, email)")
-        .eq("role", "client");
-      const list: Client[] = (roles ?? [])
-        .map((r: any) => r.profiles)
-        .filter(Boolean)
-        .sort((a: Client, b: Client) => (a.name || a.email).localeCompare(b.name || b.email));
+      const { data: roles } = await supabase.from("user_roles").select("user_id").eq("role", "client");
+      const ids = (roles ?? []).map((r) => r.user_id);
+      if (!ids.length) { setClients([]); return; }
+      const { data: profs } = await supabase.from("profiles").select("id, name, email").in("id", ids);
+      const list: Client[] = (profs ?? [])
+        .slice()
+        .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
       setClients(list);
     })();
   }, []);
