@@ -140,6 +140,8 @@ function CreateClientForm({ onCreated, createFn }: { onCreated: () => void; crea
 
 function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articles: { id: string; name: string }[]; onSaved: () => void }) {
   const [name, setName] = useState(client.name);
+  const [logoUrl, setLogoUrl] = useState<string | null>(client.logo_url);
+  const [uploading, setUploading] = useState(false);
   const [locations, setLocations] = useState(client.locations);
   const [newLoc, setNewLoc] = useState("");
   const [days, setDays] = useState<number[]>(client.days);
@@ -155,9 +157,21 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
   }
   function removeLoc(id: string) { setLocations(locations.filter(l => l.id !== id)); }
 
+  async function uploadLogo(file: File) {
+    if (file.size > 4 * 1024 * 1024) { toast.error("Image trop lourde (max 4 Mo)"); return; }
+    setUploading(true);
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `${client.id}/${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("client-logos").upload(path, file, { upsert: true, contentType: file.type });
+    if (error) { setUploading(false); return toast.error(error.message); }
+    const { data } = supabase.storage.from("client-logos").getPublicUrl(path);
+    setLogoUrl(data.publicUrl);
+    setUploading(false);
+  }
+
   async function save() {
     setSaving(true);
-    await supabase.from("profiles").update({ name }).eq("id", client.id);
+    await supabase.from("profiles").update({ name, logo_url: logoUrl }).eq("id", client.id);
 
     // Locations: replace all (delete those missing, insert new)
     const existing = client.locations.map(l => l.id);
