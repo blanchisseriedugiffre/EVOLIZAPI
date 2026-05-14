@@ -151,9 +151,19 @@ function Dashboard() {
                         {qtyByArt.get(a.id) ?? <span className="text-muted-foreground/40">·</span>}
                       </td>
                     ))}
-                    <td className="py-3 px-4 text-right align-top">
+                     <td className="py-3 px-4 text-right align-top">
                       <div className="inline-flex flex-col items-end gap-1">
                         <div className="inline-flex items-center gap-1.5">
+                          {(r.status === "todo" || r.status === "in_progress") && (
+                            <button
+                              onClick={() => printOrder(r)}
+                              className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground hover:brightness-95"
+                              title="Imprimer le ticket"
+                              aria-label="Imprimer"
+                            >
+                              🖨
+                            </button>
+                          )}
                           {r.status === "todo" && (
                             <Link
                               to="/admin/new-order"
