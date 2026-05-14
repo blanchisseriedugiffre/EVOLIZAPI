@@ -24,7 +24,9 @@ function LoginPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const { error } = await signIn(email, password);
+    const id = email.trim();
+    const loginEmail = id.includes("@") ? id : `${id.toLowerCase()}@atelier.local`;
+    const { error } = await signIn(loginEmail, password);
     setSubmitting(false);
     if (error) {
       toast.error("Connexion impossible", { description: error });
@@ -71,8 +73,8 @@ function LoginPage() {
           </div>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+              <Label htmlFor="email">Identifiant</Label>
+              <Input id="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" placeholder="nom d'utilisateur ou email" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Mot de passe</Label>

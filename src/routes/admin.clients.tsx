@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { createClientAccount, deleteClientAccount } from "@/lib/admin.functions";
+import { createClientAccount, deleteClientAccount, USERNAME_EMAIL_DOMAIN } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -54,8 +54,13 @@ function ClientsAdmin() {
   }
   useEffect(() => { load(); }, []);
 
+  function displayUsername(email: string) {
+    const suffix = `@${USERNAME_EMAIL_DOMAIN}`;
+    return email.endsWith(suffix) ? email.slice(0, -suffix.length) : email;
+  }
+
   async function removeClient(c: ClientRow) {
-    if (!confirm(`Supprimer le compte ${c.email} ?`)) return;
+    if (!confirm(`Supprimer le compte ${displayUsername(c.email)} ?`)) return;
     try { await deleteFn({ data: { userId: c.id } }); toast.success("Supprimé"); load(); }
     catch (e: any) { toast.error(e?.message ?? "Erreur"); }
   }
@@ -75,7 +80,7 @@ function ClientsAdmin() {
           <thead className="bg-muted/50">
             <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground">
               <th className="px-4 py-3">Nom</th>
-              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Identifiant</th>
               <th className="px-4 py-3">Lieux</th>
               <th className="px-4 py-3">Jours</th>
               <th className="px-4 py-3">Articles</th>
@@ -86,7 +91,7 @@ function ClientsAdmin() {
             {clients.map(c => (
               <tr key={c.id}>
                 <td className="px-4 py-3 font-medium">{c.name || "—"}</td>
-                <td className="px-4 py-3 text-muted-foreground">{c.email}</td>
+                <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{displayUsername(c.email)}</td>
                 <td className="px-4 py-3">{c.locations.length}</td>
                 <td className="px-4 py-3">{c.days.map(d => DAYS_FR_LONG[d].slice(0, 3)).join(", ") || "—"}</td>
                 <td className="px-4 py-3">{c.article_ids.length}</td>
@@ -119,19 +124,23 @@ function ClientsAdmin() {
 
 function CreateClientForm({ onCreated, createFn }: { onCreated: () => void; createFn: ReturnType<typeof useServerFn<typeof createClientAccount>> }) {
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
-    try { await createFn({ data: { name, email, password } }); toast.success("Client créé"); onCreated(); }
+    try { await createFn({ data: { name, username, password } }); toast.success("Client créé"); onCreated(); }
     catch (e: any) { toast.error(e?.message ?? "Erreur"); }
     finally { setBusy(false); }
   }
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="space-y-1.5"><Label>Nom</Label><Input value={name} onChange={e => setName(e.target.value)} required /></div>
-      <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
+      <div className="space-y-1.5">
+        <Label>Nom d'utilisateur</Label>
+        <Input value={username} onChange={e => setUsername(e.target.value.toLowerCase())} required minLength={2} maxLength={60} pattern="[a-zA-Z0-9._\-]+" autoComplete="off" placeholder="ex. bistrot" />
+        <p className="text-[11px] text-muted-foreground">Lettres, chiffres, . _ - uniquement.</p>
+      </div>
       <div className="space-y-1.5"><Label>Mot de passe (min. 8)</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} /></div>
       <DialogFooter><Button type="submit" disabled={busy}>{busy ? "Création…" : "Créer"}</Button></DialogFooter>
     </form>
