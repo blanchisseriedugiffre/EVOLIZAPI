@@ -138,7 +138,7 @@ function CreateClientForm({ onCreated, createFn }: { onCreated: () => void; crea
       <div className="space-y-1.5"><Label>Nom</Label><Input value={name} onChange={e => setName(e.target.value)} required /></div>
       <div className="space-y-1.5">
         <Label>Nom d'utilisateur</Label>
-        <Input value={username} onChange={e => setUsername(e.target.value.toLowerCase())} required minLength={2} maxLength={60} pattern="[a-zA-Z0-9._\-]+" autoComplete="off" placeholder="ex. bistrot" />
+        <Input value={username} onChange={e => setUsername(e.target.value)} required minLength={2} maxLength={60} pattern="[a-zA-Z0-9._\-]+" autoComplete="off" placeholder="ex. Bistrot" />
         <p className="text-[11px] text-muted-foreground">Lettres, chiffres, . _ - uniquement.</p>
       </div>
       <div className="space-y-1.5"><Label>Mot de passe (min. 8)</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} /></div>
