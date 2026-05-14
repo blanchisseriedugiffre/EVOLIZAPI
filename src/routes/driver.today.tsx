@@ -52,7 +52,7 @@ export function DriverToday() {
     const today = format(new Date(), "yyyy-MM-dd");
     const { data, error } = await supabase
       .from("orders")
-      .select("id, order_number, status, delivered_at, delivery_date, note, location_id, profiles(name), delivery_locations(name, lat, lng), order_lines(quantity, articles(name))")
+      .select("id, order_number, status, delivered_at, delivery_date, note, containers, location_id, profiles(name), delivery_locations(name, lat, lng), order_lines(quantity, articles(name))")
       .eq("delivery_date", today)
       .eq("archived", false)
       .order("created_at", { ascending: true });
@@ -69,6 +69,7 @@ export function DriverToday() {
       delivered_at: r.delivered_at,
       delivery_date: r.delivery_date,
       note: r.note,
+      containers: r.containers ?? null,
       lines: (r.order_lines ?? []).map((l: any) => ({ article_name: l.articles?.name ?? "?", quantity: l.quantity })),
     })));
     setLoading(false);
