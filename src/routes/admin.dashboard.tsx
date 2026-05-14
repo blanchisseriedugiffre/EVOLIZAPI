@@ -85,7 +85,7 @@ function Dashboard() {
     const dateCmd = format(new Date(r.created_at), "d MMM yyyy 'à' HH:mm", { locale: fr });
     const lines = r.lines
       .filter(l => l.quantity > 0)
-      .map(l => `<tr><td style="padding:4px 6px;border-bottom:1px dashed #999;font-weight:bold">${l.article_name}</td><td style="padding:4px 6px;border-bottom:1px dashed #999;text-align:right;font-weight:bold">${l.quantity}</td></tr>`)
+      .map(l => `<tr><td style="padding:7px 6px;border-bottom:1px dashed #999;font-weight:bold">${l.article_name}</td><td style="padding:7px 6px;border-bottom:1px dashed #999;text-align:right;font-weight:bold">${l.quantity}</td></tr>`)
       .join("");
     const noteHtml = r.note ? `<div style="margin-top:8px;padding:6px;border:1px dashed #000"><b>Note:</b> ${r.note.replace(/</g, "&lt;")}</div>` : "";
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Commande #${r.order_number}</title>
