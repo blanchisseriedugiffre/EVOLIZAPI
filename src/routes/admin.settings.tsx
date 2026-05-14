@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { updateOwnAdminCredentials } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,7 +15,9 @@ export const Route = createFileRoute("/admin/settings")({
 
 function AdminSettings() {
   const { user } = useAuth();
-  const currentId = user?.email?.replace(/@atelier\.local$/, "") ?? "";
+  const updateCreds = useServerFn(updateOwnAdminCredentials);
+  const currentEmail = user?.email ?? "";
+  const currentId = currentEmail.replace(/@atelier\.local$/, "");
 
   const [identifier, setIdentifier] = useState(currentId);
   const [password, setPassword] = useState("");
@@ -26,13 +30,15 @@ function AdminSettings() {
     const id = identifier.trim();
     if (!id) return;
     setSavingId(true);
-    const newEmail = id.includes("@") ? id : `${id.toLowerCase()}@atelier.local`;
-    const { error } = await supabase.auth.updateUser({ email: newEmail });
-    setSavingId(false);
-    if (error) {
-      toast.error("Mise à jour impossible", { description: error.message });
-    } else {
-      toast.success("Identifiant mis à jour");
+    try {
+      await updateCreds({ data: { identifier: id } });
+      toast.success("Identifiant mis à jour", { description: "Effectif immédiatement." });
+      // Refresh local session so the new email shows up
+      await supabase.auth.refreshSession();
+    } catch (err) {
+      toast.error("Mise à jour impossible", { description: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setSavingId(false);
     }
   }
 
@@ -47,14 +53,15 @@ function AdminSettings() {
       return;
     }
     setSavingPwd(true);
-    const { error } = await supabase.auth.updateUser({ password });
-    setSavingPwd(false);
-    if (error) {
-      toast.error("Mise à jour impossible", { description: error.message });
-    } else {
+    try {
+      await updateCreds({ data: { password } });
       toast.success("Mot de passe mis à jour");
       setPassword("");
       setConfirm("");
+    } catch (err) {
+      toast.error("Mise à jour impossible", { description: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setSavingPwd(false);
     }
   }
 
@@ -62,16 +69,16 @@ function AdminSettings() {
     <div className="max-w-xl space-y-10">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Paramètres administrateur</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Modifiez votre identifiant et votre mot de passe.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Identifiant actuel : <span className="font-mono">{currentEmail}</span></p>
       </div>
 
       <form onSubmit={updateIdentifier} className="space-y-4 rounded-lg border border-border bg-card p-6">
         <div>
           <h2 className="text-base font-medium">Identifiant</h2>
-          <p className="text-xs text-muted-foreground mt-1">Utilisé pour vous connecter.</p>
+          <p className="text-xs text-muted-foreground mt-1">Nom d'utilisateur ou email. Modification effective immédiatement.</p>
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="identifier">Nom d'utilisateur ou email</Label>
+          <Label htmlFor="identifier">Nouvel identifiant</Label>
           <Input
             id="identifier"
             type="text"
@@ -81,7 +88,7 @@ function AdminSettings() {
             required
           />
         </div>
-        <Button type="submit" disabled={savingId || identifier.trim() === currentId}>
+        <Button type="submit" disabled={savingId}>
           {savingId ? "Enregistrement…" : "Mettre à jour l'identifiant"}
         </Button>
       </form>
