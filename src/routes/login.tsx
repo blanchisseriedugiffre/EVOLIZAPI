@@ -7,6 +7,14 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
+  head: () => ({
+    meta: [
+      { title: "Blanchisserie du Giffre — Gestion de commandes de linge" },
+      { name: "description", content: "Gérez vos commandes de linge en ligne avec la Blanchisserie du Giffre." },
+      { property: "og:title", content: "Blanchisserie du Giffre" },
+      { property: "og:description", content: "Gérez vos commandes de linge en ligne." },
+    ],
+  }),
   component: LoginPage,
 });
 
@@ -35,36 +43,21 @@ function LoginPage() {
     }
   }
 
-  function fill(e: string) {
-    setEmail(e);
-    setPassword("Demo!2025");
-  }
-
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
-      <div className="hidden lg:flex flex-col justify-between p-12 bg-zinc-100/60 border-r border-border">
-        <div>
-          <div className="text-xs uppercase tracking-widest text-muted-foreground">Atelier</div>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">Gestion des commandes</h1>
-        </div>
-        <div className="space-y-3 text-sm text-muted-foreground">
-          <p className="text-foreground font-medium">Comptes de démonstration</p>
-          <button onClick={() => fill("admin@demo.fr")} className="block w-full text-left rounded-lg border border-border bg-card p-3 hover:bg-accent transition-colors">
-            <div className="font-medium text-foreground">admin@demo.fr</div>
-            <div className="text-xs">Administrateur — tableau de commandes, catalogue, clients</div>
-          </button>
-          <button onClick={() => fill("bistrot@demo.fr")} className="block w-full text-left rounded-lg border border-border bg-card p-3 hover:bg-accent transition-colors">
-            <div className="font-medium text-foreground">bistrot@demo.fr</div>
-            <div className="text-xs">Client — Le Petit Bistrot (livraison le jeudi)</div>
-          </button>
-          <button onClick={() => fill("mairie@demo.fr")} className="block w-full text-left rounded-lg border border-border bg-card p-3 hover:bg-accent transition-colors">
-            <div className="font-medium text-foreground">mairie@demo.fr</div>
-            <div className="text-xs">Client — Mairie (mardi & vendredi)</div>
-          </button>
-          <p className="text-xs">Mot de passe pour tous : <span className="font-mono">Demo!2025</span></p>
-        </div>
-        <div className="text-xs text-muted-foreground">© Atelier · Démo</div>
+      <div className="flex flex-col items-center justify-center gap-8 p-8 lg:p-12 bg-background border-b lg:border-b-0 lg:border-r border-border">
+        <img
+          src="/camion-livraison.jpg"
+          alt="Camion de livraison Blanchisserie du Giffre"
+          className="w-full max-w-xl rounded-2xl shadow-lg object-cover"
+        />
+        <img
+          src="/titre-bleu.jpg"
+          alt="Blanchisserie du Giffre"
+          className="w-full max-w-xl object-contain"
+        />
       </div>
+
       <div className="flex items-center justify-center p-6">
         <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
           <div>
