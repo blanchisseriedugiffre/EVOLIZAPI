@@ -32,7 +32,7 @@ function Archives() {
     const [{ data: o }, { data: arts }] = await Promise.all([
       supabase
         .from("orders")
-        .select("id, order_number, delivery_date, created_at, status, note, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
+        .select("id, order_number, delivery_date, created_at, status, delivered_at, note, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
         .eq("archived", true)
         .order("delivery_date", { ascending: false })
         .order("created_at", { ascending: false }),
@@ -48,6 +48,7 @@ function Archives() {
         delivery_date: r.delivery_date,
         created_at: r.created_at,
         status: r.status,
+        delivered_at: r.delivered_at ?? null,
         note: r.note ?? null,
         lines: (r.order_lines ?? []).map((l: any) => ({
           article_id: l.article_id,
