@@ -26,7 +26,8 @@ function LoginPage() {
   const [submitting, setSubmitting] = useState(false);
 
   if (!loading && session) {
-    return <Navigate to={role === "admin" ? "/admin/dashboard" : "/client/order"} />;
+    const target = role === "admin" ? "/admin/dashboard" : role === "driver" ? "/driver" : "/client/order";
+    return <Navigate to={target} />;
   }
 
   async function handleSubmit(e: FormEvent) {
