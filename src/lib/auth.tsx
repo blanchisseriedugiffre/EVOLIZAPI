@@ -26,6 +26,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
       if (s?.user) {
+        setRole(null);
+        setProfile(null);
+        setLoading(true);
         setTimeout(() => {
           fetchRole(s.user.id);
           fetchProfile(s.user.id);
@@ -33,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setRole(null);
         setProfile(null);
+        setLoading(false);
       }
     });
     supabase.auth.getSession().then(({ data }) => {
