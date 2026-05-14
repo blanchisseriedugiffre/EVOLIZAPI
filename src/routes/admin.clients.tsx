@@ -207,7 +207,17 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
     const kept = locations.filter(l => !l.id.startsWith("tmp-"));
     const keptIds = new Set(kept.map(l => l.id));
     const toDelete = existing.filter(id => !keptIds.has(id));
-    if (toDelete.length) await supabase.from("delivery_locations").delete().in("id", toDelete);
+    if (toDelete.length) {
+      const { error: delErr } = await supabase.from("delivery_locations").delete().in("id", toDelete);
+      if (delErr) {
+        setSaving(false);
+        const msg = /foreign key|violates|RESTRICT/i.test(delErr.message)
+          ? "Impossible de supprimer un lieu utilisé par des commandes existantes (y compris archivées)."
+          : delErr.message;
+        toast.error(msg);
+        return;
+      }
+    }
     // Update names of kept locations if changed
     const originalById = new Map(client.locations.map(l => [l.id, l.name]));
     const toUpdate = kept.filter(l => {
