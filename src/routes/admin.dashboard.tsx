@@ -41,6 +41,8 @@ function Dashboard() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
   const [editConfirmId, setEditConfirmId] = useState<string | null>(null);
+  const [containersPromptId, setContainersPromptId] = useState<string | null>(null);
+  const [containersValue, setContainersValue] = useState("");
   const [articles, setArticles] = useState<{ id: string; name: string }[]>([]);
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
   const [loading, setLoading] = useState(true);
