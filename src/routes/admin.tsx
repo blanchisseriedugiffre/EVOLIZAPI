@@ -23,6 +23,7 @@ function AdminLayout() {
         { label: "Clients", to: "/admin/clients" },
         { label: "Archives", to: "/admin/archives" },
         { label: "Paramètres", to: "/admin/settings" },
+        { label: "Visu Chauffeur", to: "/admin/driver-view" },
       ]}
     >
       <Outlet />
