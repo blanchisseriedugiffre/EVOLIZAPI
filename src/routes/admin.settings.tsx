@@ -124,6 +124,71 @@ function AdminSettings() {
           {savingPwd ? "Enregistrement…" : "Mettre à jour le mot de passe"}
         </Button>
       </form>
+
+      <DriverAccountSection />
     </div>
+  );
+}
+
+function DriverAccountSection() {
+  const upsert = useServerFn(upsertDriverAccount);
+  const fetchInfo = useServerFn(getDriverInfo);
+  const [exists, setExists] = useState<boolean | null>(null);
+  const [username, setUsername] = useState(DRIVER_USERNAME_DEFAULT);
+  const [password, setPassword] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    fetchInfo({ data: undefined } as any).then((r: any) => {
+      if (r?.exists) {
+        setExists(true);
+        setUsername(r.username || DRIVER_USERNAME_DEFAULT);
+      } else {
+        setExists(false);
+      }
+    }).catch(() => setExists(false));
+  }, []);
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    if (!exists && password.length < 4) {
+      toast.error("Mot de passe d'au moins 4 caractères pour créer le compte");
+      return;
+    }
+    setSaving(true);
+    try {
+      await upsert({ data: { username, ...(password ? { password } : {}) } });
+      toast.success(exists ? "Compte chauffeur mis à jour" : "Compte chauffeur créé");
+      setPassword("");
+      setExists(true);
+    } catch (err) {
+      toast.error("Erreur", { description: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-4 rounded-lg border border-border bg-card p-6">
+      <div>
+        <h2 className="text-base font-medium">Compte chauffeur</h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          {exists === null ? "Chargement…"
+            : exists ? "Modifier l'identifiant ou le mot de passe du chauffeur."
+            : "Aucun compte chauffeur. Créez-en un pour donner accès à la tournée du jour."}
+        </p>
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="driver-username">Identifiant</Label>
+        <Input id="driver-username" value={username} onChange={(e) => setUsername(e.target.value)} minLength={2} maxLength={60} pattern="[a-zA-Z0-9._\-]+" required autoComplete="off" />
+      </div>
+      <div className="space-y-1.5">
+        <Label htmlFor="driver-password">{exists ? "Nouveau mot de passe (optionnel)" : "Mot de passe"}</Label>
+        <Input id="driver-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" placeholder={exists ? "Laisser vide pour ne pas changer" : "Min. 4 caractères"} />
+      </div>
+      <Button type="submit" disabled={saving || exists === null}>
+        {saving ? "Enregistrement…" : exists ? "Mettre à jour" : "Créer le compte chauffeur"}
+      </Button>
+    </form>
   );
 }
