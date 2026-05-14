@@ -19,6 +19,7 @@ function AdminLayout() {
         { label: "Saisir", to: "/admin/new-order" },
         { label: "Catalogue", to: "/admin/catalog" },
         { label: "Clients", to: "/admin/clients" },
+        { label: "Archives", to: "/admin/archives" },
       ]}
     >
       <Outlet />
