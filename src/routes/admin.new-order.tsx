@@ -261,7 +261,7 @@ function AdminNewOrder() {
             <div className="flex justify-between text-muted-foreground"><span>Articles</span><span className="text-foreground tabular-nums">{total}</span></div>
           </div>
           <Button className="w-full" disabled={submitting || total === 0 || !clientId || !locationId || !date} onClick={submit}>
-            {submitting ? "Envoi…" : "Créer la commande"}
+            {submitting ? "Envoi…" : isEditing ? "Enregistrer les modifications" : "Créer la commande"}
           </Button>
         </div>
       </div>
