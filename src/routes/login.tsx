@@ -73,8 +73,8 @@ function LoginPage() {
           </div>
           <div className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+              <Label htmlFor="email">Identifiant</Label>
+              <Input id="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" placeholder="nom d'utilisateur ou email" />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="password">Mot de passe</Label>
