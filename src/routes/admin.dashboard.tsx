@@ -112,7 +112,7 @@ function Dashboard() {
   }
 
   async function finalizeDone(id: string, containers: string | null) {
-    setRows(current => current.map(row => row.id === id ? { ...row, status: "done" } : row));
+    setRows(current => current.map(row => row.id === id ? { ...row, status: "done", containers: containers ?? row.containers } : row));
     const payload: { status: OrderStatus; containers?: string | null } = { status: "done" };
     if (containers !== null) payload.containers = containers;
     const { error } = await supabase.from("orders").update(payload).eq("id", id);
