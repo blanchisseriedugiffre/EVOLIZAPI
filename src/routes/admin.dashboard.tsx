@@ -295,7 +295,7 @@ function Dashboard() {
                             </span>
                           ) : (
                             <button
-                              onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
+                              onClick={() => advanceStatus(r)}
                               className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
                               title="Cliquer pour faire avancer le statut"
                             >
