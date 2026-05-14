@@ -82,7 +82,7 @@ function Dashboard() {
   }
 
   function printOrder(r: Row) {
-    if (r.status === "todo") {
+    if (r.status !== "in_progress") {
       setStatus(r.id, "in_progress");
     }
     const w = window.open("", "_blank", "width=380,height=600");
