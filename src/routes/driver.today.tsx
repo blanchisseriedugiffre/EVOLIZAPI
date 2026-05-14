@@ -198,7 +198,17 @@ export function DriverToday() {
                     </span>
                   )}
                 </div>
-                <div className="shrink-0">{statusBadge(o)}</div>
+                <div className="shrink-0 flex items-center gap-1.5">
+                  {o.containers && (
+                    <span
+                      className="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] font-bold tabular-nums bg-background ring-1 ring-border text-foreground"
+                      title="Nbre de chariots/sacs"
+                    >
+                      {o.containers}
+                    </span>
+                  )}
+                  {statusBadge(o)}
+                </div>
               </div>
               {/* Ligne 2 : Client/#n° · distance · actions */}
               <div className="mt-1 flex items-center justify-between gap-3">
