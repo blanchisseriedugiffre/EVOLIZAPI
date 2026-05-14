@@ -127,9 +127,18 @@ function Archives() {
                     ))}
                     <td className="py-3 px-4 text-right align-top">
                       <div className="inline-flex flex-col items-end gap-1">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]}`}>
-                          {STATUS_LABEL[r.status]}
-                        </span>
+                        {r.delivered_at ? (
+                          <span
+                            className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-blue-600 text-white ring-blue-700"
+                            title={`Livrée à ${format(new Date(r.delivered_at), "HH:mm")}`}
+                          >
+                            Livrée
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]}`}>
+                            {STATUS_LABEL[r.status]}
+                          </span>
+                        )}
                         <button
                           onClick={() => unarchive(r.id)}
                           className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-primary text-primary-foreground hover:brightness-95"
