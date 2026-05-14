@@ -143,7 +143,8 @@ function Dashboard() {
                     </td>
                     <td className="py-3 px-4 font-mono text-xs text-muted-foreground align-top whitespace-nowrap">
                       <div>#{r.order_number}{r.note && <span className="ml-2 inline-block"><AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} /></span>}</div>
-                      <div className="text-[10px] mt-0.5">{format(new Date(r.created_at), "d MMM HH:mm", { locale: fr })}</div>
+                      <div className="text-[10px] mt-0.5">{format(new Date(r.created_at), "d MMM yy", { locale: fr })}</div>
+                      <div className="text-[10px]">{format(new Date(r.created_at), "HH:mm")}</div>
                     </td>
                     {articles.map(a => (
                       <td key={a.id} className="py-3 px-3 text-center align-top tabular-nums">
