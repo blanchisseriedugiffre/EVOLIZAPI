@@ -1,4 +1,10 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Navigate, useNavigate } from "@tanstack/react-router";
+import { useState, type FormEvent } from "react";
+import { useAuth } from "@/lib/auth";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -13,40 +19,68 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
-  return (
-    <div
-      className="relative min-h-screen w-full bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: "url('/camion.jpg')" }}
-    >
-      <div className="absolute inset-0 bg-black/60" />
-      <main className="relative z-10 mx-auto flex min-h-screen max-w-7xl flex-col items-stretch gap-10 px-6 py-12 md:flex-row md:items-center md:gap-12 md:py-16">
-        {/* Partie gauche : photo en haut, titre en bas */}
-        <div className="flex w-full flex-col gap-6 md:w-1/2">
-          <img
-            src="/camion-livraison.jpg"
-            alt="Camion de livraison Blanchisserie du Giffre"
-            className="w-full rounded-2xl shadow-2xl object-cover"
-          />
-          <img
-            src="/titre-bleu.jpg"
-            alt="Blanchisserie du Giffre"
-            className="w-full rounded-2xl bg-white shadow-2xl object-contain"
-          />
-        </div>
+  const { signIn, session, loading, role } = useAuth();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-        {/* Partie droite : accroche + bouton */}
-        <div className="flex w-full flex-col items-center text-center md:w-1/2 md:items-start md:text-left">
-          <p className="max-w-xl text-white text-xl sm:text-2xl md:text-3xl font-light drop-shadow-lg">
-            Gérez vos commandes de linge en ligne
-          </p>
-          <Link
-            to="/login"
-            className="mt-8 inline-flex items-center justify-center rounded-full bg-white px-8 py-3.5 text-sm sm:text-base font-medium text-zinc-900 shadow-lg transition-all hover:bg-white/90 hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-black/40"
-          >
-            Accéder à mes commandes
-          </Link>
-        </div>
-      </main>
+  if (!loading && session) {
+    return <Navigate to={role === "admin" ? "/admin/dashboard" : "/client/order"} />;
+  }
+
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    const id = email.trim();
+    const loginEmail = id.includes("@") ? id : `${id.toLowerCase()}@atelier.local`;
+    const { error } = await signIn(loginEmail, password);
+    setSubmitting(false);
+    if (error) {
+      toast.error("Connexion impossible", { description: error });
+    } else {
+      navigate({ to: "/" });
+    }
+  }
+
+  return (
+    <div className="min-h-screen grid lg:grid-cols-2 bg-background">
+      {/* Partie gauche : photo en haut, titre en bas */}
+      <div className="flex flex-col items-center justify-center gap-8 p-8 lg:p-12 bg-background border-b lg:border-b-0 lg:border-r border-border">
+        <img
+          src="/camion-livraison.jpg"
+          alt="Camion de livraison Blanchisserie du Giffre"
+          className="w-full max-w-xl rounded-2xl shadow-lg object-cover"
+        />
+        <img
+          src="/titre-bleu.jpg"
+          alt="Blanchisserie du Giffre"
+          className="w-full max-w-xl object-contain"
+        />
+      </div>
+
+      {/* Partie droite : formulaire de connexion */}
+      <div className="flex items-center justify-center p-6">
+        <form onSubmit={handleSubmit} className="w-full max-w-sm space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold tracking-tight">Connexion</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Accédez à votre espace.</p>
+          </div>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="email">Identifiant</Label>
+              <Input id="email" type="text" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" placeholder="nom d'utilisateur ou email" />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="password">Mot de passe</Label>
+              <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+            </div>
+          </div>
+          <Button type="submit" className="w-full" disabled={submitting}>
+            {submitting ? "Connexion…" : "Se connecter"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
