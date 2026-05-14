@@ -49,7 +49,7 @@ function Dashboard() {
     const [{ data: o }, { data: arts }] = await Promise.all([
       supabase
         .from("orders")
-        .select("id, order_number, delivery_date, created_at, status, note, note_seen_by_admin, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
+        .select("id, order_number, delivery_date, created_at, status, delivered_at, note, note_seen_by_admin, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
         .eq("archived", false)
         .order("delivery_date", { ascending: true })
         .order("created_at", { ascending: true }),
@@ -65,6 +65,7 @@ function Dashboard() {
         delivery_date: r.delivery_date,
         created_at: r.created_at,
         status: r.status,
+        delivered_at: r.delivered_at ?? null,
         note: r.note ?? null,
         note_seen_by_admin: r.note_seen_by_admin ?? true,
         lines: (r.order_lines ?? []).map((l: any) => ({
