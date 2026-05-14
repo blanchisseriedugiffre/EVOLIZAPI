@@ -20,6 +20,8 @@ interface Location { id: string; name: string; }
 
 function AdminNewOrder() {
   const navigate = useNavigate();
+  const { orderId } = Route.useSearch();
+  const isEditing = Boolean(orderId);
   const [clients, setClients] = useState<Client[]>([]);
   const [clientId, setClientId] = useState<string>("");
   const [locations, setLocations] = useState<Location[]>([]);
@@ -30,6 +32,7 @@ function AdminNewOrder() {
   const [qty, setQty] = useState<Record<string, number>>({});
   const [restrictDay, setRestrictDay] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [editLoaded, setEditLoaded] = useState(false);
 
   useEffect(() => {
     (async () => {
