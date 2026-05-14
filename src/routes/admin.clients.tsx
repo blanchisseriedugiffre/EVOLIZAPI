@@ -263,8 +263,12 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
         <Label className="mb-2 block">Lieux de livraison ({locations.length}/10)</Label>
         <div className="space-y-2">
           {locations.map(l => (
-            <div key={l.id} className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-1.5 text-sm">
-              <span className="flex-1">{l.name}</span>
+            <div key={l.id} className="flex items-center gap-2 bg-muted/50 rounded-md px-2 py-1 text-sm">
+              <Input
+                value={l.name}
+                onChange={e => setLocations(locations.map(x => x.id === l.id ? { ...x, name: e.target.value } : x))}
+                className="flex-1 h-8"
+              />
               <button type="button" onClick={() => removeLoc(l.id)} className="text-muted-foreground hover:text-destructive"><X className="size-4" /></button>
             </div>
           ))}
