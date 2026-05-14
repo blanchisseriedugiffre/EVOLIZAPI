@@ -13,12 +13,13 @@ export function ClientNoteButton({
   initialNote,
   disabled,
   size = "md",
+  onLocalChange,
 }: {
+  /** When null, the note is held locally and emitted via onLocalChange. */
   orderId?: string | null;
   initialNote: string | null;
   disabled?: boolean;
   size?: "sm" | "md";
-  /** When orderId is null, the parent stores the draft. */
   onLocalChange?: (v: string) => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -28,14 +29,18 @@ export function ClientNoteButton({
   useEffect(() => { setNote(initialNote ?? ""); }, [initialNote]);
 
   async function save() {
-    if (!orderId) { setOpen(false); return; }
-    setSaving(true);
-    const { error } = await supabase.from("orders")
-      .update({ note: note.trim() || null, note_seen_by_admin: false })
-      .eq("id", orderId);
-    setSaving(false);
-    if (error) return toast.error(error.message);
-    toast.success("Note enregistrée");
+    const trimmed = note.trim();
+    if (orderId) {
+      setSaving(true);
+      const { error } = await supabase.from("orders")
+        .update({ note: trimmed || null, note_seen_by_admin: false })
+        .eq("id", orderId);
+      setSaving(false);
+      if (error) return toast.error(error.message);
+      toast.success("Note enregistrée");
+    } else {
+      onLocalChange?.(trimmed);
+    }
     setOpen(false);
   }
 
