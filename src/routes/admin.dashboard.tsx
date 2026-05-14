@@ -22,6 +22,7 @@ interface Row {
   created_at: string;
   status: OrderStatus;
   delivered_at: string | null;
+  containers: string | null;
   note: string | null;
   note_seen_by_admin: boolean;
   lines: { article_id: string; article_name: string; quantity: number }[];
@@ -51,7 +52,7 @@ function Dashboard() {
     const [{ data: o }, { data: arts }] = await Promise.all([
       supabase
         .from("orders")
-        .select("id, order_number, delivery_date, created_at, status, delivered_at, note, note_seen_by_admin, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
+        .select("id, order_number, delivery_date, created_at, status, delivered_at, containers, note, note_seen_by_admin, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
         .eq("archived", false)
         .order("delivery_date", { ascending: true })
         .order("created_at", { ascending: true }),
@@ -68,6 +69,7 @@ function Dashboard() {
         created_at: r.created_at,
         status: r.status,
         delivered_at: r.delivered_at ?? null,
+        containers: r.containers ?? null,
         note: r.note ?? null,
         note_seen_by_admin: r.note_seen_by_admin ?? true,
         lines: (r.order_lines ?? []).map((l: any) => ({
@@ -110,7 +112,7 @@ function Dashboard() {
   }
 
   async function finalizeDone(id: string, containers: string | null) {
-    setRows(current => current.map(row => row.id === id ? { ...row, status: "done" } : row));
+    setRows(current => current.map(row => row.id === id ? { ...row, status: "done", containers: containers ?? row.containers } : row));
     const payload: { status: OrderStatus; containers?: string | null } = { status: "done" };
     if (containers !== null) payload.containers = containers;
     const { error } = await supabase.from("orders").update(payload).eq("id", id);
@@ -285,6 +287,14 @@ function Dashboard() {
                             >
                               Modifier
                             </button>
+                          )}
+                          {r.containers && (
+                            <span
+                              className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground tabular-nums"
+                              title="Nbre de chariots/sacs"
+                            >
+                              {r.containers}
+                            </span>
                           )}
                           {r.delivered_at ? (
                             <span

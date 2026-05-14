@@ -22,6 +22,7 @@ interface DriverOrder {
   delivered_at: string | null;
   delivery_date: string;
   note: string | null;
+  containers: string | null;
   lines: { article_name: string; quantity: number }[];
 }
 
@@ -51,7 +52,7 @@ export function DriverToday() {
     const today = format(new Date(), "yyyy-MM-dd");
     const { data, error } = await supabase
       .from("orders")
-      .select("id, order_number, status, delivered_at, delivery_date, note, location_id, profiles(name), delivery_locations(name, lat, lng), order_lines(quantity, articles(name))")
+      .select("id, order_number, status, delivered_at, delivery_date, note, containers, location_id, profiles(name), delivery_locations(name, lat, lng), order_lines(quantity, articles(name))")
       .eq("delivery_date", today)
       .eq("archived", false)
       .order("created_at", { ascending: true });
@@ -68,6 +69,7 @@ export function DriverToday() {
       delivered_at: r.delivered_at,
       delivery_date: r.delivery_date,
       note: r.note,
+      containers: r.containers ?? null,
       lines: (r.order_lines ?? []).map((l: any) => ({ article_name: l.articles?.name ?? "?", quantity: l.quantity })),
     })));
     setLoading(false);
@@ -196,7 +198,17 @@ export function DriverToday() {
                     </span>
                   )}
                 </div>
-                <div className="shrink-0">{statusBadge(o)}</div>
+                <div className="shrink-0 flex items-center gap-1.5">
+                  {o.containers && (
+                    <span
+                      className="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] font-bold tabular-nums bg-background ring-1 ring-border text-foreground"
+                      title="Nbre de chariots/sacs"
+                    >
+                      {o.containers}
+                    </span>
+                  )}
+                  {statusBadge(o)}
+                </div>
               </div>
               {/* Ligne 2 : Client/#n° · distance · actions */}
               <div className="mt-1 flex items-center justify-between gap-3">
