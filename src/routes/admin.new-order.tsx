@@ -10,6 +10,7 @@ import { fr } from "date-fns/locale";
 import { Minus, Plus } from "lucide-react";
 
 export const Route = createFileRoute("/admin/new-order")({
+  validateSearch: (s: Record<string, unknown>) => ({ orderId: typeof s.orderId === "string" ? s.orderId : undefined }),
   component: AdminNewOrder,
 });
 
