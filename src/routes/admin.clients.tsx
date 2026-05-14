@@ -185,6 +185,21 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
 
   async function save() {
     setSaving(true);
+    try {
+      const usernameChanged = username && username.toLowerCase() !== currentUsername.toLowerCase();
+      if (usernameChanged || password) {
+        await updateCredsFn({ data: {
+          userId: client.id,
+          ...(usernameChanged ? { username } : {}),
+          ...(password ? { password } : {}),
+        } });
+      }
+    } catch (e: any) {
+      setSaving(false);
+      toast.error(e?.message ?? "Erreur identifiants");
+      return;
+    }
+
     await supabase.from("profiles").update({ name, logo_url: logoUrl }).eq("id", client.id);
 
     // Locations: replace all (delete those missing, insert new)
