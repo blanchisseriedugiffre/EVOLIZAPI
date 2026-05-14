@@ -115,10 +115,12 @@ export function AdminNoteCell({
       <button
         type="button"
         onClick={openAndMarkSeen}
-        className={`inline-block size-3.5 rounded-sm bg-yellow-300 ring-1 ring-yellow-600/50 align-middle ${seen ? "" : "note-blink"}`}
+        className={`inline-flex items-center justify-center h-10 w-12 rounded-md bg-yellow-300 ring-1 ring-yellow-600/50 align-middle text-yellow-900 hover:bg-yellow-400 transition ${seen ? "" : "note-blink"}`}
         title={seen ? "Note (lue)" : "Nouvelle note !"}
         aria-label="Voir la note"
-      />
+      >
+        <StickyNote className="size-5" />
+      </button>
       <Dialog open={open} onOpenChange={(o) => o ? setOpen(true) : close()}>
         <DialogContent>
           <DialogHeader><DialogTitle>Note du client</DialogTitle></DialogHeader>
