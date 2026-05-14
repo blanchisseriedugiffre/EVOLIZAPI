@@ -47,7 +47,7 @@ function ClientsAdmin() {
     setArticles(arts ?? []);
     setClients((profs ?? []).map(p => ({
       id: p.id, name: p.name, email: p.email, logo_url: p.logo_url,
-      locations: (locs ?? []).filter(l => l.client_id === p.id).map(l => ({ id: l.id, name: l.name })),
+      locations: (locs ?? []).filter(l => l.client_id === p.id).map(l => ({ id: l.id, name: l.name, lat: (l as any).lat ?? null, lng: (l as any).lng ?? null })),
       days: (days ?? []).filter(d => d.client_id === p.id).map(d => d.day_of_week).sort(),
       article_ids: (cArts ?? []).filter(c => c.client_id === p.id).map(c => c.article_id),
     })));
