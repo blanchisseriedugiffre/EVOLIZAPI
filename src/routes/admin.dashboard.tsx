@@ -26,6 +26,16 @@ interface Row {
   lines: { article_id: string; article_name: string; quantity: number }[];
 }
 
+function escapeHtml(value: string | number | null | undefined) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;",
+  })[char] ?? char);
+}
+
 function Dashboard() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
@@ -77,49 +87,68 @@ function Dashboard() {
   }, []);
 
   async function setStatus(id: string, status: OrderStatus) {
+    setRows(current => current.map(row => row.id === id ? { ...row, status } : row));
     const { error } = await supabase.from("orders").update({ status }).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      load();
+    }
   }
 
   function printOrder(r: Row) {
-    if (r.status !== "in_progress") {
-      setStatus(r.id, "in_progress");
-    }
-    const w = window.open("", "_blank", "width=380,height=600");
-    if (!w) { toast.error("Impossible d'ouvrir la fenêtre d'impression"); return; }
+    const printedStatus: OrderStatus = "in_progress";
+    if (r.status !== printedStatus) setStatus(r.id, printedStatus);
+
     const dateLivr = format(new Date(r.delivery_date), "EEEE d MMMM yyyy", { locale: fr });
     const dateCmd = format(new Date(r.created_at), "d MMM yyyy 'à' HH:mm", { locale: fr });
     const lines = r.lines
       .filter(l => l.quantity > 0)
-      .map(l => `<tr><td style="padding:7px 6px;border-bottom:1px dashed #999;font-weight:bold">${l.article_name}</td><td style="padding:7px 6px;border-bottom:1px dashed #999;text-align:right;font-weight:bold">${l.quantity}</td></tr>`)
+      .map(l => `<tr><td style="padding:7px 6px;border-bottom:1px dashed #999;font-weight:bold">${escapeHtml(l.article_name)}</td><td style="padding:7px 6px;border-bottom:1px dashed #999;text-align:right;font-weight:bold">${escapeHtml(l.quantity)}</td></tr>`)
       .join("");
-    const noteHtml = r.note ? `<div style="margin-top:8px;padding:6px;border:1px dashed #000"><b>Note:</b> ${r.note.replace(/</g, "&lt;")}</div>` : "";
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Commande #${r.order_number}</title>
-<style>
-  @page { size: 80mm auto; margin: 4mm; }
-  body { font-family: -apple-system, system-ui, sans-serif; font-size: 12px; color: #000; margin: 0; padding: 4px; width: 72mm; }
-  h1 { font-size: 16px; margin: 0 0 6px; text-align: center; }
-  .row { margin: 2px 0; }
-  .label { font-weight: 600; text-transform: uppercase; font-size: 10px; color: #444; }
-  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-  th { text-align: left; padding: 4px 6px; border-bottom: 2px solid #000; font-size: 11px; }
-  hr { border: none; border-top: 1px solid #000; margin: 6px 0; }
-</style></head><body>
-  <h1>Commande #${r.order_number}</h1>
+    const noteHtml = r.note ? `<div style="margin-top:8px;padding:6px;border:1px dashed #000"><b>Note:</b> ${escapeHtml(r.note)}</div>` : "";
+    const ticketHtml = `<div style="font-family:-apple-system,system-ui,sans-serif;font-size:12px;color:#000;margin:0;padding:4px;width:72mm;background:#fff">
+  <h1 style="font-size:16px;margin:0 0 6px;text-align:center">Commande #${escapeHtml(r.order_number)}</h1>
   <hr/>
-  <div class="row"><span class="label">Lieu:</span> <b style="font-size:21px">${r.location_name}</b></div>
-  <div class="row"><span class="label">Client:</span> ${r.client_name}</div>
-  <div class="row"><span class="label">Livraison:</span> <b>${dateLivr}</b></div>
-  <div class="row"><span class="label">Commandé le:</span> ${dateCmd}</div>
-  <div class="row"><span class="label">Statut:</span> ${STATUS_LABEL[r.status]}</div>
+  <div style="margin:2px 0"><span style="font-weight:600;text-transform:uppercase;font-size:10px;color:#444">Lieu:</span> <b style="font-size:21px">${escapeHtml(r.location_name)}</b></div>
+  <div style="margin:2px 0"><span style="font-weight:600;text-transform:uppercase;font-size:10px;color:#444">Client:</span> ${escapeHtml(r.client_name)}</div>
+  <div style="margin:2px 0"><span style="font-weight:600;text-transform:uppercase;font-size:10px;color:#444">Livraison:</span> <b>${escapeHtml(dateLivr)}</b></div>
+  <div style="margin:2px 0"><span style="font-weight:600;text-transform:uppercase;font-size:10px;color:#444">Commandé le:</span> ${escapeHtml(dateCmd)}</div>
+  <div style="margin:2px 0"><span style="font-weight:600;text-transform:uppercase;font-size:10px;color:#444">Statut:</span> ${escapeHtml(STATUS_LABEL[printedStatus])}</div>
   ${noteHtml}
-  <table>
-    <thead><tr><th>Article</th><th style="text-align:right">Qté</th></tr></thead>
+  <table style="width:100%;border-collapse:collapse;margin-top:8px">
+    <thead><tr><th style="text-align:left;padding:4px 6px;border-bottom:2px solid #000;font-size:11px">Article</th><th style="text-align:right;padding:4px 6px;border-bottom:2px solid #000;font-size:11px">Qté</th></tr></thead>
     <tbody>${lines || '<tr><td colspan="2" style="padding:6px;text-align:center;color:#666">Aucun article</td></tr>'}</tbody>
   </table>
-  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),300);};</script>
-</body></html>`);
-    w.document.close();
+</div>`;
+
+    document.getElementById("print-ticket-root")?.remove();
+    document.getElementById("print-ticket-style")?.remove();
+
+    const style = document.createElement("style");
+    style.id = "print-ticket-style";
+    style.textContent = `@media screen{#print-ticket-root{display:none!important}}@media print{@page{size:80mm auto;margin:4mm}html,body{background:#fff!important;margin:0!important;padding:0!important}body *{visibility:hidden!important}#print-ticket-root,#print-ticket-root *{visibility:visible!important}#print-ticket-root{display:block!important;position:absolute!important;left:0!important;top:0!important;width:72mm!important}}`;
+
+    const root = document.createElement("div");
+    root.id = "print-ticket-root";
+    root.innerHTML = ticketHtml;
+    document.body.append(style, root);
+
+    let fallbackCleanup: number | undefined;
+    const cleanup = () => {
+      if (fallbackCleanup) window.clearTimeout(fallbackCleanup);
+      window.removeEventListener("afterprint", cleanup);
+      root.remove();
+      style.remove();
+    };
+
+    window.addEventListener("afterprint", cleanup, { once: true });
+    fallbackCleanup = window.setTimeout(cleanup, 60000);
+    try {
+      window.print();
+    } catch (error) {
+      cleanup();
+      toast.error("Impossible de lancer l'impression");
+    }
   }
 
   async function archiveOrder(id: string) {
