@@ -48,6 +48,28 @@ function AdminNewOrder() {
   }, []);
 
   useEffect(() => {
+    if (!isEditing || !orderId || editLoaded) return;
+    (async () => {
+      const { data: o } = await supabase
+        .from("orders")
+        .select("client_id, location_id, delivery_date, order_lines(article_id, quantity)")
+        .eq("id", orderId)
+        .maybeSingle();
+      if (!o) { toast.error("Commande introuvable"); return; }
+      setClientId(o.client_id);
+      // pending values applied once locations/articles load
+      pendingRef.current = {
+        locationId: o.location_id,
+        date: o.delivery_date,
+        qty: Object.fromEntries((o.order_lines ?? []).map((l: any) => [l.article_id, l.quantity])),
+      };
+      setEditLoaded(true);
+    })();
+  }, [isEditing, orderId, editLoaded]);
+
+  const pendingRef = (useMemo(() => ({ current: null as null | { locationId: string; date: string; qty: Record<string, number> } }), []));
+
+  useEffect(() => {
     if (!clientId) {
       setLocations([]); setDays([]); setArticles([]);
       setLocationId(""); setDate(""); setQty({});
@@ -62,9 +84,18 @@ function AdminNewOrder() {
       setLocations(locs ?? []);
       setDays((ds ?? []).map(d => d.day_of_week));
       setArticles((cArts ?? []).map((c: any) => c.articles).filter(Boolean));
-      setLocationId(locs && locs.length ? locs[0].id : "");
-      setDate("");
-      setQty({});
+      const pending = pendingRef.current;
+      if (pending) {
+        setLocationId(pending.locationId);
+        setDate(pending.date);
+        setQty(pending.qty);
+        setRestrictDay(false);
+        pendingRef.current = null;
+      } else {
+        setLocationId(locs && locs.length ? locs[0].id : "");
+        setDate("");
+        setQty({});
+      }
     })();
   }, [clientId]);
 
@@ -75,8 +106,12 @@ function AdminNewOrder() {
       const d = addDays(start, i);
       if (!restrictDay || days.includes(d.getDay())) out.push(d);
     }
+    // ensure currently-selected (edit) date is present
+    if (date && !out.find(d => format(d, "yyyy-MM-dd") === date)) {
+      out.unshift(new Date(date));
+    }
     return out;
-  }, [days, restrictDay]);
+  }, [days, restrictDay, date]);
 
   useEffect(() => {
     if (!date && availableDates.length) setDate(format(availableDates[0], "yyyy-MM-dd"));
@@ -93,6 +128,20 @@ function AdminNewOrder() {
     const lines = Object.entries(qty).filter(([, q]) => q > 0).map(([article_id, quantity]) => ({ article_id, quantity }));
     if (!lines.length) return toast.error("Ajoutez au moins un article");
     setSubmitting(true);
+    if (isEditing && orderId) {
+      const { error: eUp } = await supabase.from("orders")
+        .update({ client_id: clientId, location_id: locationId, delivery_date: date })
+        .eq("id", orderId);
+      if (eUp) { setSubmitting(false); return toast.error(eUp.message); }
+      const { error: eDel } = await supabase.from("order_lines").delete().eq("order_id", orderId);
+      if (eDel) { setSubmitting(false); return toast.error(eDel.message); }
+      const { error: eIns } = await supabase.from("order_lines").insert(lines.map(l => ({ ...l, order_id: orderId })));
+      setSubmitting(false);
+      if (eIns) return toast.error(eIns.message);
+      toast.success("Commande modifiée");
+      navigate({ to: "/admin/dashboard" });
+      return;
+    }
     const { data: order, error } = await supabase.from("orders")
       .insert({ client_id: clientId, location_id: locationId, delivery_date: date, status: "todo" })
       .select("id").single();
