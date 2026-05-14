@@ -218,16 +218,17 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
         return;
       }
     }
-    // Update names of kept locations if changed
-    const originalById = new Map(client.locations.map(l => [l.id, l.name]));
-    const toUpdate = kept.filter(l => {
-      const name = l.name.trim();
-      return name && originalById.get(l.id) !== name;
-    });
-    for (const l of toUpdate) {
-      await supabase.from("delivery_locations").update({ name: l.name.trim() }).eq("id", l.id);
+    // Update kept locations (name + GPS) when changed
+    const originalById = new Map(client.locations.map(l => [l.id, l]));
+    for (const l of kept) {
+      const orig = originalById.get(l.id);
+      const newName = l.name.trim();
+      if (!newName) continue;
+      if (!orig || orig.name !== newName || orig.lat !== l.lat || orig.lng !== l.lng) {
+        await supabase.from("delivery_locations").update({ name: newName, lat: l.lat, lng: l.lng }).eq("id", l.id);
+      }
     }
-    const toInsert = locations.filter(l => l.id.startsWith("tmp-") && l.name.trim()).map(l => ({ client_id: client.id, name: l.name.trim() }));
+    const toInsert = locations.filter(l => l.id.startsWith("tmp-") && l.name.trim()).map(l => ({ client_id: client.id, name: l.name.trim(), lat: l.lat, lng: l.lng }));
     if (toInsert.length) await supabase.from("delivery_locations").insert(toInsert);
 
     await supabase.from("client_delivery_days").delete().eq("client_id", client.id);
