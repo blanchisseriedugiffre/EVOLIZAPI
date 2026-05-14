@@ -26,6 +26,7 @@ interface Row {
 }
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
   const [articles, setArticles] = useState<{ id: string; name: string }[]>([]);
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
