@@ -298,13 +298,15 @@ function Dashboard() {
                               Modifier
                             </button>
                           )}
-                          {r.containers && (
-                            <span
-                              className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground tabular-nums"
-                              title="Nbre de chariots/sacs"
+                          {(r.status === "in_progress" || r.status === "done") && (
+                            <button
+                              type="button"
+                              onClick={() => openContainersEditor(r)}
+                              className="inline-flex items-center justify-center px-2 py-0.5 min-w-[28px] rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground tabular-nums hover:brightness-95"
+                              title="Nbre de chariots/sacs (cliquer pour modifier)"
                             >
-                              {r.containers}
-                            </span>
+                              {r.containers || <span className="text-muted-foreground/50">·</span>}
+                            </button>
                           )}
                           {r.delivered_at ? (
                             <span
