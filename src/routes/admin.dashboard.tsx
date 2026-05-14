@@ -112,16 +112,26 @@ function Dashboard() {
   }
 
   async function finalizeDone(id: string, containers: string | null) {
-    setRows(current => current.map(row => row.id === id ? { ...row, status: "done", containers: containers ?? row.containers } : row));
-    const payload: { status: OrderStatus; containers?: string | null } = { status: "done" };
+    const row = rows.find(r => r.id === id);
+    const shouldAdvance = row?.status !== "done";
+    setRows(current => current.map(r => r.id === id ? { ...r, status: shouldAdvance ? "done" : r.status, containers: containers ?? r.containers } : r));
+    const payload: { status?: OrderStatus; containers?: string | null } = {};
+    if (shouldAdvance) payload.status = "done";
     if (containers !== null) payload.containers = containers;
-    const { error } = await supabase.from("orders").update(payload).eq("id", id);
-    if (error) {
-      toast.error(error.message);
-      load();
+    if (Object.keys(payload).length > 0) {
+      const { error } = await supabase.from("orders").update(payload).eq("id", id);
+      if (error) {
+        toast.error(error.message);
+        load();
+      }
     }
     setContainersPromptId(null);
     setContainersValue("");
+  }
+
+  function openContainersEditor(r: Row) {
+    setContainersValue(r.containers ?? "");
+    setContainersPromptId(r.id);
   }
 
   async function markDelivered(id: string, orderNumber: number) {
