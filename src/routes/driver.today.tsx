@@ -212,6 +212,25 @@ function DriverToday() {
                   </li>
                 ))}
               </ul>
+              {!o.delivered_at && (
+                <div className="mt-3 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!confirm(`Marquer la commande #${o.order_number} comme livrée ?`)) return;
+                      const now = new Date().toISOString();
+                      const { error } = await supabase.from("orders").update({ status: "done", delivered_at: now }).eq("id", o.id);
+                      if (error) { toast.error(error.message); return; }
+                      onSiteRef.current.set(o.location_id, false);
+                      setOrders(curr => curr.map(x => x.id === o.id ? { ...x, status: "done", delivered_at: now } : x));
+                      toast.success("Commande marquée livrée");
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                  >
+                    ✓ Marquer livrée
+                  </button>
+                </div>
+              )}
             </div>
           );
         })}
