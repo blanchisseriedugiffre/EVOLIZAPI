@@ -207,11 +207,7 @@ function Dashboard() {
                           )}
                           {r.status === "todo" && (
                             <button
-                              onClick={() => {
-                                if (window.confirm("ÊTES-VOUS SÛR DE VOULOIR MODIFIER LA COMMANDE ?")) {
-                                  navigate({ to: "/admin/new-order", search: { orderId: r.id } });
-                                }
-                              }}
+                              onClick={() => setEditConfirmId(r.id)}
                               className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground hover:brightness-95"
                               title="Modifier la commande"
                             >
