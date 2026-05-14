@@ -241,6 +241,37 @@ function DriverToday() {
           );
         })}
       </div>
+
+      <Dialog open={expandedId !== null} onOpenChange={(o) => { if (!o) setExpandedId(null); }}>
+        <DialogContent className="max-w-md">
+          {(() => {
+            const o = orders.find(x => x.id === expandedId);
+            if (!o) return null;
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle>{o.location_name} · #{o.order_number}</DialogTitle>
+                </DialogHeader>
+                <div className="text-xs text-muted-foreground -mt-1">{o.client_name}</div>
+                {o.note && (
+                  <div className="text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1">📝 {o.note}</div>
+                )}
+                <ul className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm mt-1">
+                  {o.lines.filter(l => l.quantity > 0).map((l, i) => (
+                    <li key={i} className="flex justify-between border-b border-dashed border-border/60 py-0.5">
+                      <span className="truncate">{l.article_name}</span>
+                      <span className="font-bold tabular-nums">{l.quantity}</span>
+                    </li>
+                  ))}
+                  {o.lines.filter(l => l.quantity > 0).length === 0 && (
+                    <li className="col-span-2 text-muted-foreground italic">Aucun article</li>
+                  )}
+                </ul>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
