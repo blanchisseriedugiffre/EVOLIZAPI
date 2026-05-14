@@ -80,7 +80,7 @@ function ClientsAdmin() {
           <thead className="bg-muted/50">
             <tr className="text-left text-[11px] uppercase tracking-wider text-muted-foreground">
               <th className="px-4 py-3">Nom</th>
-              <th className="px-4 py-3">Email</th>
+              <th className="px-4 py-3">Identifiant</th>
               <th className="px-4 py-3">Lieux</th>
               <th className="px-4 py-3">Jours</th>
               <th className="px-4 py-3">Articles</th>
@@ -91,7 +91,7 @@ function ClientsAdmin() {
             {clients.map(c => (
               <tr key={c.id}>
                 <td className="px-4 py-3 font-medium">{c.name || "—"}</td>
-                <td className="px-4 py-3 text-muted-foreground">{c.email}</td>
+                <td className="px-4 py-3 text-muted-foreground font-mono text-xs">{displayUsername(c.email)}</td>
                 <td className="px-4 py-3">{c.locations.length}</td>
                 <td className="px-4 py-3">{c.days.map(d => DAYS_FR_LONG[d].slice(0, 3)).join(", ") || "—"}</td>
                 <td className="px-4 py-3">{c.article_ids.length}</td>
