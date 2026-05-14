@@ -38,7 +38,7 @@ function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: 
   return 2 * R * Math.asin(Math.sqrt(h));
 }
 
-function DriverToday() {
+export function DriverToday() {
   const [orders, setOrders] = useState<DriverOrder[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [pos, setPos] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
