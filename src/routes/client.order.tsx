@@ -120,7 +120,14 @@ function NewOrder() {
     }
 
     const { data: order, error } = await supabase.from("orders")
-      .insert({ client_id: user.id, location_id: locationId, delivery_date: date, status: "todo" })
+      .insert({
+        client_id: user.id,
+        location_id: locationId,
+        delivery_date: date,
+        status: "todo",
+        note: draftNote.trim() || null,
+        note_seen_by_admin: draftNote.trim() ? false : true,
+      })
       .select("id").single();
     if (error || !order) { setSubmitting(false); return toast.error(error?.message ?? "Erreur"); }
     const { error: e2 } = await supabase.from("order_lines").insert(lines.map(l => ({ ...l, order_id: order.id })));
