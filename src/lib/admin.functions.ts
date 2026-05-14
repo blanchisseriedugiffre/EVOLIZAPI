@@ -17,7 +17,7 @@ export const createClientAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: roleRow } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
-    if (!roleRow) throw new Response("Forbidden", { status: 403 });
+    if (!roleRow) throw new Error("Forbidden");
 
     const username = data.username.toLowerCase();
     const email = `${username}@${USERNAME_EMAIL_DOMAIN}`;
@@ -28,7 +28,7 @@ export const createClientAccount = createServerFn({ method: "POST" })
       email_confirm: true,
       user_metadata: { name: data.name, username },
     });
-    if (error) throw new Response(error.message, { status: 400 });
+    if (error) throw new Error(error.message);
     await supabaseAdmin.from("profiles").update({ name: data.name }).eq("id", created.user.id);
     return { id: created.user.id, username };
   });
@@ -45,7 +45,7 @@ export const updateClientCredentials = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: roleRow } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
-    if (!roleRow) throw new Response("Forbidden", { status: 403 });
+    if (!roleRow) throw new Error("Forbidden");
 
     const updates: { email?: string; password?: string; user_metadata?: Record<string, unknown> } = {};
     let newUsername: string | undefined;
@@ -58,7 +58,7 @@ export const updateClientCredentials = createServerFn({ method: "POST" })
     if (!updates.email && !updates.password) return { ok: true };
 
     const { error } = await supabaseAdmin.auth.admin.updateUserById(data.userId, updates);
-    if (error) throw new Response(error.message, { status: 400 });
+    if (error) throw new Error(error.message);
     if (updates.email) {
       await supabaseAdmin.from("profiles").update({ email: updates.email }).eq("id", data.userId);
     }
@@ -71,8 +71,8 @@ export const deleteClientAccount = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: roleRow } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
-    if (!roleRow) throw new Response("Forbidden", { status: 403 });
+    if (!roleRow) throw new Error("Forbidden");
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
-    if (error) throw new Response(error.message, { status: 400 });
+    if (error) throw new Error(error.message);
     return { ok: true };
   });
