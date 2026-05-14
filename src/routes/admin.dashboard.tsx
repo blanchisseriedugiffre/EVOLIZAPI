@@ -22,6 +22,7 @@ interface Row {
   created_at: string;
   status: OrderStatus;
   delivered_at: string | null;
+  containers: string | null;
   note: string | null;
   note_seen_by_admin: boolean;
   lines: { article_id: string; article_name: string; quantity: number }[];
