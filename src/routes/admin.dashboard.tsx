@@ -82,6 +82,9 @@ function Dashboard() {
   }
 
   function printOrder(r: Row) {
+    if (r.status === "todo") {
+      setStatus(r.id, "in_progress");
+    }
     const w = window.open("", "_blank", "width=380,height=600");
     if (!w) { toast.error("Impossible d'ouvrir la fenêtre d'impression"); return; }
     const dateLivr = format(new Date(r.delivery_date), "EEEE d MMMM yyyy", { locale: fr });
