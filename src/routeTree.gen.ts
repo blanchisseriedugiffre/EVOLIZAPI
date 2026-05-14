@@ -15,6 +15,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ClientOrderRouteImport } from './routes/client.order'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
+import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
 import { Route as AdminNewOrderRouteImport } from './routes/admin.new-order'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminClientsRouteImport } from './routes/admin.clients'
@@ -50,6 +51,11 @@ const ClientHistoryRoute = ClientHistoryRouteImport.update({
   id: '/history',
   path: '/history',
   getParentRoute: () => ClientRoute,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AdminRoute,
 } as any)
 const AdminNewOrderRoute = AdminNewOrderRouteImport.update({
   id: '/new-order',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/admin/clients': typeof AdminClientsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/new-order': typeof AdminNewOrderRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
 }
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/admin/clients': typeof AdminClientsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/new-order': typeof AdminNewOrderRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
 }
@@ -114,6 +122,7 @@ export interface FileRoutesById {
   '/admin/clients': typeof AdminClientsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/new-order': typeof AdminNewOrderRoute
+  '/admin/settings': typeof AdminSettingsRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
 }
@@ -129,6 +138,7 @@ export interface FileRouteTypes {
     | '/admin/clients'
     | '/admin/dashboard'
     | '/admin/new-order'
+    | '/admin/settings'
     | '/client/history'
     | '/client/order'
   fileRoutesByTo: FileRoutesByTo
@@ -142,6 +152,7 @@ export interface FileRouteTypes {
     | '/admin/clients'
     | '/admin/dashboard'
     | '/admin/new-order'
+    | '/admin/settings'
     | '/client/history'
     | '/client/order'
   id:
@@ -155,6 +166,7 @@ export interface FileRouteTypes {
     | '/admin/clients'
     | '/admin/dashboard'
     | '/admin/new-order'
+    | '/admin/settings'
     | '/client/history'
     | '/client/order'
   fileRoutesById: FileRoutesById
@@ -210,6 +222,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClientHistoryRouteImport
       parentRoute: typeof ClientRoute
     }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/new-order': {
       id: '/admin/new-order'
       path: '/new-order'
@@ -254,6 +273,7 @@ interface AdminRouteChildren {
   AdminClientsRoute: typeof AdminClientsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
   AdminNewOrderRoute: typeof AdminNewOrderRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
@@ -262,6 +282,7 @@ const AdminRouteChildren: AdminRouteChildren = {
   AdminClientsRoute: AdminClientsRoute,
   AdminDashboardRoute: AdminDashboardRoute,
   AdminNewOrderRoute: AdminNewOrderRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
 }
 
 const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
