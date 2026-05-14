@@ -85,7 +85,7 @@ function Dashboard() {
     const dateCmd = format(new Date(r.created_at), "d MMM yyyy 'à' HH:mm", { locale: fr });
     const lines = r.lines
       .filter(l => l.quantity > 0)
-      .map(l => `<tr><td style="padding:4px 6px;border-bottom:1px dashed #999">${l.article_name}</td><td style="padding:4px 6px;border-bottom:1px dashed #999;text-align:right;font-weight:bold">${l.quantity}</td></tr>`)
+      .map(l => `<tr><td style="padding:4px 6px;border-bottom:1px dashed #999;font-weight:bold">${l.article_name}</td><td style="padding:4px 6px;border-bottom:1px dashed #999;text-align:right;font-weight:bold">${l.quantity}</td></tr>`)
       .join("");
     const noteHtml = r.note ? `<div style="margin-top:8px;padding:6px;border:1px dashed #000"><b>Note:</b> ${r.note.replace(/</g, "&lt;")}</div>` : "";
     w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Commande #${r.order_number}</title>
@@ -101,8 +101,8 @@ function Dashboard() {
 </style></head><body>
   <h1>Commande #${r.order_number}</h1>
   <hr/>
-  <div class="row"><span class="label">Client:</span> <b>${r.client_name}</b></div>
-  <div class="row"><span class="label">Lieu:</span> ${r.location_name}</div>
+  <div class="row"><span class="label">Lieu:</span> <b>${r.location_name}</b></div>
+  <div class="row"><span class="label">Client:</span> ${r.client_name}</div>
   <div class="row"><span class="label">Livraison:</span> <b>${dateLivr}</b></div>
   <div class="row"><span class="label">Commandé le:</span> ${dateCmd}</div>
   <div class="row"><span class="label">Statut:</span> ${STATUS_LABEL[r.status]}</div>
@@ -176,8 +176,8 @@ function Dashboard() {
                       <div className="font-medium">{format(new Date(r.delivery_date), "EEE d MMM", { locale: fr })}</div>
                     </td>
                     <td className="py-3 px-4 align-top">
-                      <div className="font-medium">{r.client_name}</div>
-                      <div className="text-xs text-muted-foreground">{r.location_name}</div>
+                      <div className="font-bold">{r.location_name}</div>
+                      <div className="text-xs text-muted-foreground">{r.client_name}</div>
                     </td>
                     <td className="py-3 px-4 font-mono text-xs text-muted-foreground align-top whitespace-nowrap">
                       <div>#{r.order_number}{r.note && <span className="ml-2 inline-block"><AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} /></span>}</div>
