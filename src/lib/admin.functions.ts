@@ -65,6 +65,38 @@ export const updateClientCredentials = createServerFn({ method: "POST" })
     return { ok: true, username: newUsername };
   });
 
+export const updateOwnAdminCredentials = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      identifier: z.string().trim().min(2).max(120).optional(),
+      password: z.string().min(6).max(72).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
+    if (!roleRow) throw new Error("Forbidden");
+
+    const updates: { email?: string; password?: string; email_confirm?: boolean; user_metadata?: Record<string, unknown> } = {};
+    if (data.identifier) {
+      const id = data.identifier.trim();
+      const email = id.includes("@") ? id.toLowerCase() : `${id.toLowerCase()}@${USERNAME_EMAIL_DOMAIN}`;
+      updates.email = email;
+      updates.email_confirm = true;
+      updates.user_metadata = { username: id.includes("@") ? id.split("@")[0] : id.toLowerCase() };
+    }
+    if (data.password) updates.password = data.password;
+    if (!updates.email && !updates.password) return { ok: true };
+
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(context.userId, updates);
+    if (error) throw new Error(error.message);
+    if (updates.email) {
+      await supabaseAdmin.from("profiles").update({ email: updates.email }).eq("id", context.userId);
+    }
+    return { ok: true, email: updates.email };
+  });
+
 export const deleteClientAccount = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ userId: z.string().uuid() }).parse(d))
