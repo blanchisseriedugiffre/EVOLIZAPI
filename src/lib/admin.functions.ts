@@ -10,7 +10,7 @@ export const createClientAccount = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z.object({
       username: z.string().trim().min(2).max(60).regex(/^[a-zA-Z0-9._-]+$/, "Caractères autorisés : lettres, chiffres, . _ -"),
-      password: z.string().min(8).max(72),
+      password: z.string().min(4).max(72),
       name: z.string().min(1).max(120),
     }).parse(d),
   )
