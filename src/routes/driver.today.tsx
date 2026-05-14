@@ -286,6 +286,48 @@ export function DriverToday() {
           })()}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={containersEditId !== null} onOpenChange={(o) => { if (!o) { setContainersEditId(null); setContainersValue(""); } }}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>Nbre de chariots ou sacs ?</DialogTitle>
+          </DialogHeader>
+          <input
+            type="text"
+            maxLength={3}
+            value={containersValue}
+            onChange={(e) => setContainersValue(e.target.value.replace(/[^A-Za-z0-9]/g, "").slice(0, 3))}
+            autoFocus
+            placeholder="ex: 3"
+            className="w-full px-3 py-2 text-center text-lg font-mono rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => { setContainersEditId(null); setContainersValue(""); }}
+              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold ring-1 ring-border bg-background hover:bg-muted"
+            >
+              Ignorer
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                const id = containersEditId;
+                if (!id) return;
+                const value = containersValue.trim() || null;
+                setOrders(curr => curr.map(x => x.id === id ? { ...x, containers: value } : x));
+                const { error } = await supabase.from("orders").update({ containers: value }).eq("id", id);
+                if (error) toast.error(error.message);
+                setContainersEditId(null);
+                setContainersValue("");
+              }}
+              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-primary-foreground hover:brightness-95"
+            >
+              Valider
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
