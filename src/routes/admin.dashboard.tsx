@@ -99,6 +99,29 @@ function Dashboard() {
     }
   }
 
+  function advanceStatus(r: Row) {
+    const next = STATUS_NEXT[r.status];
+    if (r.status === "in_progress" && next === "done") {
+      setContainersValue("");
+      setContainersPromptId(r.id);
+      return;
+    }
+    setStatus(r.id, next);
+  }
+
+  async function finalizeDone(id: string, containers: string | null) {
+    setRows(current => current.map(row => row.id === id ? { ...row, status: "done" } : row));
+    const payload: { status: OrderStatus; containers?: string | null } = { status: "done" };
+    if (containers !== null) payload.containers = containers;
+    const { error } = await supabase.from("orders").update(payload).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+    }
+    setContainersPromptId(null);
+    setContainersValue("");
+  }
+
   async function markDelivered(id: string, orderNumber: number) {
     if (!confirm(`Marquer la commande #${orderNumber} comme livrée ?`)) return;
     const now = new Date().toISOString();
