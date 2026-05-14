@@ -24,7 +24,9 @@ function LoginPage() {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setSubmitting(true);
-    const { error } = await signIn(email, password);
+    const id = email.trim();
+    const loginEmail = id.includes("@") ? id : `${id.toLowerCase()}@atelier.local`;
+    const { error } = await signIn(loginEmail, password);
     setSubmitting(false);
     if (error) {
       toast.error("Connexion impossible", { description: error });
