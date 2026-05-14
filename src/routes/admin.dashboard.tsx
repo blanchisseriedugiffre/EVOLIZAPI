@@ -97,6 +97,19 @@ function Dashboard() {
     }
   }
 
+  async function markDelivered(id: string, orderNumber: number) {
+    if (!confirm(`Marquer la commande #${orderNumber} comme livrée ?`)) return;
+    const now = new Date().toISOString();
+    setRows(current => current.map(row => row.id === id ? { ...row, status: "done", delivered_at: now } : row));
+    const { error } = await supabase.from("orders").update({ status: "done", delivered_at: now }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+    } else {
+      toast.success("Commande marquée livrée");
+    }
+  }
+
   function printOrder(r: Row) {
     const printedStatus: OrderStatus = "in_progress";
     if (r.status !== printedStatus) setStatus(r.id, printedStatus);
