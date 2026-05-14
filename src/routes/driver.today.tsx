@@ -199,14 +199,14 @@ export function DriverToday() {
                   )}
                 </div>
                 <div className="shrink-0 flex items-center gap-1.5">
-                  {o.containers && (
-                    <span
-                      className="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] font-bold tabular-nums bg-background ring-1 ring-border text-foreground"
-                      title="Nbre de chariots/sacs"
-                    >
-                      {o.containers}
-                    </span>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setContainersValue(o.containers ?? ""); setContainersEditId(o.id); }}
+                    className="inline-flex items-center justify-center px-2 py-1 min-w-[32px] rounded-md text-[11px] font-bold tabular-nums bg-background ring-1 ring-border text-foreground hover:bg-muted"
+                    title="Nbre de chariots/sacs (cliquer pour modifier)"
+                  >
+                    {o.containers || <span className="text-muted-foreground/50">·</span>}
+                  </button>
                   {statusBadge(o)}
                 </div>
               </div>
