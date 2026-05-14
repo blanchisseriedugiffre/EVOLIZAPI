@@ -22,6 +22,7 @@ interface DriverOrder {
   delivered_at: string | null;
   delivery_date: string;
   note: string | null;
+  containers: string | null;
   lines: { article_name: string; quantity: number }[];
 }
 
