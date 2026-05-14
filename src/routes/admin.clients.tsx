@@ -124,19 +124,23 @@ function ClientsAdmin() {
 
 function CreateClientForm({ onCreated, createFn }: { onCreated: () => void; createFn: ReturnType<typeof useServerFn<typeof createClientAccount>> }) {
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setBusy(true);
-    try { await createFn({ data: { name, email, password } }); toast.success("Client créé"); onCreated(); }
+    try { await createFn({ data: { name, username, password } }); toast.success("Client créé"); onCreated(); }
     catch (e: any) { toast.error(e?.message ?? "Erreur"); }
     finally { setBusy(false); }
   }
   return (
     <form onSubmit={submit} className="space-y-3">
       <div className="space-y-1.5"><Label>Nom</Label><Input value={name} onChange={e => setName(e.target.value)} required /></div>
-      <div className="space-y-1.5"><Label>Email</Label><Input type="email" value={email} onChange={e => setEmail(e.target.value)} required /></div>
+      <div className="space-y-1.5">
+        <Label>Nom d'utilisateur</Label>
+        <Input value={username} onChange={e => setUsername(e.target.value.toLowerCase())} required minLength={2} maxLength={60} pattern="[a-zA-Z0-9._\-]+" autoComplete="off" placeholder="ex. bistrot" />
+        <p className="text-[11px] text-muted-foreground">Lettres, chiffres, . _ - uniquement.</p>
+      </div>
       <div className="space-y-1.5"><Label>Mot de passe (min. 8)</Label><Input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8} /></div>
       <DialogFooter><Button type="submit" disabled={busy}>{busy ? "Création…" : "Créer"}</Button></DialogFooter>
     </form>
