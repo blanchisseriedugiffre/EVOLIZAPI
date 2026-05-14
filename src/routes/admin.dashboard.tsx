@@ -78,6 +78,12 @@ function Dashboard() {
     if (error) toast.error(error.message);
   }
 
+  async function archiveOrder(id: string) {
+    const { error } = await supabase.from("orders").update({ archived: true }).eq("id", id);
+    if (error) toast.error(error.message);
+    else toast.success("Commande archivée");
+  }
+
   const visible = useMemo(() => filter === "all" ? rows : rows.filter(r => r.status === filter), [rows, filter]);
 
   return (
