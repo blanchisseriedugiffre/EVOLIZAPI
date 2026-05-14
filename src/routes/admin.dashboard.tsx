@@ -78,6 +78,44 @@ function Dashboard() {
     if (error) toast.error(error.message);
   }
 
+  function printOrder(r: Row) {
+    const w = window.open("", "_blank", "width=380,height=600");
+    if (!w) { toast.error("Impossible d'ouvrir la fenêtre d'impression"); return; }
+    const dateLivr = format(new Date(r.delivery_date), "EEEE d MMMM yyyy", { locale: fr });
+    const dateCmd = format(new Date(r.created_at), "d MMM yyyy 'à' HH:mm", { locale: fr });
+    const lines = r.lines
+      .filter(l => l.quantity > 0)
+      .map(l => `<tr><td style="padding:4px 6px;border-bottom:1px dashed #999">${l.article_name}</td><td style="padding:4px 6px;border-bottom:1px dashed #999;text-align:right;font-weight:bold">${l.quantity}</td></tr>`)
+      .join("");
+    const noteHtml = r.note ? `<div style="margin-top:8px;padding:6px;border:1px dashed #000"><b>Note:</b> ${r.note.replace(/</g, "&lt;")}</div>` : "";
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Commande #${r.order_number}</title>
+<style>
+  @page { size: 80mm auto; margin: 4mm; }
+  body { font-family: -apple-system, system-ui, sans-serif; font-size: 12px; color: #000; margin: 0; padding: 4px; width: 72mm; }
+  h1 { font-size: 16px; margin: 0 0 6px; text-align: center; }
+  .row { margin: 2px 0; }
+  .label { font-weight: 600; text-transform: uppercase; font-size: 10px; color: #444; }
+  table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  th { text-align: left; padding: 4px 6px; border-bottom: 2px solid #000; font-size: 11px; }
+  hr { border: none; border-top: 1px solid #000; margin: 6px 0; }
+</style></head><body>
+  <h1>Commande #${r.order_number}</h1>
+  <hr/>
+  <div class="row"><span class="label">Client:</span> <b>${r.client_name}</b></div>
+  <div class="row"><span class="label">Lieu:</span> ${r.location_name}</div>
+  <div class="row"><span class="label">Livraison:</span> <b>${dateLivr}</b></div>
+  <div class="row"><span class="label">Commandé le:</span> ${dateCmd}</div>
+  <div class="row"><span class="label">Statut:</span> ${STATUS_LABEL[r.status]}</div>
+  ${noteHtml}
+  <table>
+    <thead><tr><th>Article</th><th style="text-align:right">Qté</th></tr></thead>
+    <tbody>${lines || '<tr><td colspan="2" style="padding:6px;text-align:center;color:#666">Aucun article</td></tr>'}</tbody>
+  </table>
+  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),300);};</script>
+</body></html>`);
+    w.document.close();
+  }
+
   async function archiveOrder(id: string) {
     const { error } = await supabase.from("orders").update({ archived: true }).eq("id", id);
     if (error) toast.error(error.message);
