@@ -1,15 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { STATUS_LABEL, STATUS_NEXT, STATUS_ROW_CLASS, STATUS_BADGE_CLASS, type OrderStatus } from "@/lib/orders";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { STATUS_LABEL, STATUS_BADGE_CLASS, STATUS_ROW_CLASS, type OrderStatus } from "@/lib/orders";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
-import { AdminNoteCell } from "@/components/NoteDialog";
 
-export const Route = createFileRoute("/admin/dashboard")({
-  component: Dashboard,
+export const Route = createFileRoute("/admin/archives")({
+  component: Archives,
 });
 
 interface Row {
@@ -21,24 +19,22 @@ interface Row {
   created_at: string;
   status: OrderStatus;
   note: string | null;
-  note_seen_by_admin: boolean;
   lines: { article_id: string; article_name: string; quantity: number }[];
 }
 
-function Dashboard() {
+function Archives() {
   const [rows, setRows] = useState<Row[]>([]);
   const [articles, setArticles] = useState<{ id: string; name: string }[]>([]);
-  const [filter, setFilter] = useState<"all" | OrderStatus>("all");
   const [loading, setLoading] = useState(true);
 
   async function load() {
     const [{ data: o }, { data: arts }] = await Promise.all([
       supabase
         .from("orders")
-        .select("id, order_number, delivery_date, created_at, status, note, note_seen_by_admin, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
-        .eq("archived", false)
-        .order("delivery_date", { ascending: true })
-        .order("created_at", { ascending: true }),
+        .select("id, order_number, delivery_date, created_at, status, note, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
+        .eq("archived", true)
+        .order("delivery_date", { ascending: false })
+        .order("created_at", { ascending: false }),
       supabase.from("articles").select("id, name").order("name"),
     ]);
     setArticles(arts ?? []);
@@ -52,7 +48,6 @@ function Dashboard() {
         created_at: r.created_at,
         status: r.status,
         note: r.note ?? null,
-        note_seen_by_admin: r.note_seen_by_admin ?? true,
         lines: (r.order_lines ?? []).map((l: any) => ({
           article_id: l.article_id,
           article_name: l.articles?.name ?? "?",
@@ -66,47 +61,25 @@ function Dashboard() {
   useEffect(() => {
     load();
     const ch = supabase
-      .channel("orders-admin")
+      .channel("orders-archives")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "order_lines" }, () => load())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  async function setStatus(id: string, status: OrderStatus) {
-    const { error } = await supabase.from("orders").update({ status }).eq("id", id);
+  async function unarchive(id: string) {
+    const { error } = await supabase.from("orders").update({ archived: false }).eq("id", id);
     if (error) toast.error(error.message);
+    else toast.success("Commande reprise");
   }
 
-  async function archiveOrder(id: string) {
-    const { error } = await supabase.from("orders").update({ archived: true }).eq("id", id);
-    if (error) toast.error(error.message);
-    else toast.success("Commande archivée");
-  }
-
-  const visible = useMemo(() => filter === "all" ? rows : rows.filter(r => r.status === filter), [rows, filter]);
+  const visible = useMemo(() => rows, [rows]);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-end justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tableau des commandes</h1>
-          <p className="text-sm text-muted-foreground mt-1">Suivi temps réel — cliquez sur un statut pour le faire avancer.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="size-2 rounded-full bg-emerald-500 animate-pulse" /> En direct
-          </span>
-          <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
-            <SelectTrigger className="w-40 h-9 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous statuts</SelectItem>
-              <SelectItem value="todo">À faire</SelectItem>
-              <SelectItem value="in_progress">En cours</SelectItem>
-              <SelectItem value="done">Terminée</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Archives</h1>
+        <p className="text-sm text-muted-foreground mt-1">Commandes archivées — cliquez sur Reprendre pour les remettre dans le tableau.</p>
       </div>
 
       <div className="overflow-hidden rounded-xl ring-1 ring-black/5 shadow-sm bg-card">
@@ -122,13 +95,13 @@ function Dashboard() {
                     {a.name.split(" ")[0]}
                   </th>
                 ))}
-                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Statut</th>
+                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {loading && <tr><td colSpan={4 + articles.length} className="py-12 text-center text-muted-foreground">Chargement…</td></tr>}
               {!loading && visible.length === 0 && (
-                <tr><td colSpan={4 + articles.length} className="py-12 text-center text-muted-foreground">Aucune commande.</td></tr>
+                <tr><td colSpan={4 + articles.length} className="py-12 text-center text-muted-foreground">Aucune commande archivée.</td></tr>
               )}
               {visible.map(r => {
                 const qtyByArt = new Map(r.lines.map(l => [l.article_id, l.quantity]));
@@ -144,7 +117,6 @@ function Dashboard() {
                     </td>
                     <td className="py-3 px-4 font-mono text-xs text-muted-foreground align-top whitespace-nowrap">
                       #{r.order_number}
-                      {r.note && <span className="ml-2 inline-block"><AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} /></span>}
                     </td>
                     {articles.map(a => (
                       <td key={a.id} className="py-3 px-3 text-center align-top tabular-nums">
@@ -153,22 +125,16 @@ function Dashboard() {
                     ))}
                     <td className="py-3 px-4 text-right align-top">
                       <div className="inline-flex flex-col items-end gap-1">
-                        <button
-                          onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
-                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
-                          title="Cliquer pour faire avancer le statut"
-                        >
+                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]}`}>
                           {STATUS_LABEL[r.status]}
+                        </span>
+                        <button
+                          onClick={() => unarchive(r.id)}
+                          className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-primary text-primary-foreground hover:brightness-95"
+                          title="Remettre dans le tableau des commandes"
+                        >
+                          Reprendre
                         </button>
-                        {r.status === "done" && (
-                          <button
-                            onClick={() => archiveOrder(r.id)}
-                            className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-muted text-foreground hover:brightness-95"
-                            title="Archiver la commande"
-                          >
-                            Archiver
-                          </button>
-                        )}
                       </div>
                     </td>
                   </tr>

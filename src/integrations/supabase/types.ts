@@ -155,6 +155,7 @@ export type Database = {
       }
       orders: {
         Row: {
+          archived: boolean
           client_id: string
           created_at: string
           delivery_date: string
@@ -167,6 +168,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived?: boolean
           client_id: string
           created_at?: string
           delivery_date: string
@@ -179,6 +181,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived?: boolean
           client_id?: string
           created_at?: string
           delivery_date?: string
