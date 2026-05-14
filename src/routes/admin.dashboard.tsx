@@ -77,14 +77,18 @@ function Dashboard() {
   }, []);
 
   async function setStatus(id: string, status: OrderStatus) {
+    setRows(current => current.map(row => row.id === id ? { ...row, status } : row));
     const { error } = await supabase.from("orders").update({ status }).eq("id", id);
-    if (error) toast.error(error.message);
+    if (error) {
+      toast.error(error.message);
+      load();
+    }
   }
 
   function printOrder(r: Row) {
-    if (r.status !== "in_progress") {
-      setStatus(r.id, "in_progress");
-    }
+    const printedStatus: OrderStatus = "in_progress";
+    if (r.status !== printedStatus) setStatus(r.id, printedStatus);
+
     const w = window.open("", "_blank", "width=380,height=600");
     if (!w) { toast.error("Impossible d'ouvrir la fenêtre d'impression"); return; }
     const dateLivr = format(new Date(r.delivery_date), "EEEE d MMMM yyyy", { locale: fr });
@@ -111,15 +115,21 @@ function Dashboard() {
   <div class="row"><span class="label">Client:</span> ${r.client_name}</div>
   <div class="row"><span class="label">Livraison:</span> <b>${dateLivr}</b></div>
   <div class="row"><span class="label">Commandé le:</span> ${dateCmd}</div>
-  <div class="row"><span class="label">Statut:</span> ${STATUS_LABEL[r.status]}</div>
+  <div class="row"><span class="label">Statut:</span> ${STATUS_LABEL[printedStatus]}</div>
   ${noteHtml}
   <table>
     <thead><tr><th>Article</th><th style="text-align:right">Qté</th></tr></thead>
     <tbody>${lines || '<tr><td colspan="2" style="padding:6px;text-align:center;color:#666">Aucun article</td></tr>'}</tbody>
   </table>
-  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),300);};</script>
 </body></html>`);
     w.document.close();
+    w.focus();
+    w.onafterprint = () => w.close();
+    try {
+      w.print();
+    } catch (error) {
+      toast.error("Impossible de lancer l'impression");
+    }
   }
 
   async function archiveOrder(id: string) {
