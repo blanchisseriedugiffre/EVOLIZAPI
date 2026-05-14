@@ -18,6 +18,7 @@ interface Row {
   delivery_date: string;
   created_at: string;
   status: OrderStatus;
+  delivered_at: string | null;
   note: string | null;
   lines: { article_id: string; article_name: string; quantity: number }[];
 }
@@ -31,7 +32,7 @@ function Archives() {
     const [{ data: o }, { data: arts }] = await Promise.all([
       supabase
         .from("orders")
-        .select("id, order_number, delivery_date, created_at, status, note, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
+        .select("id, order_number, delivery_date, created_at, status, delivered_at, note, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
         .eq("archived", true)
         .order("delivery_date", { ascending: false })
         .order("created_at", { ascending: false }),
@@ -47,6 +48,7 @@ function Archives() {
         delivery_date: r.delivery_date,
         created_at: r.created_at,
         status: r.status,
+        delivered_at: r.delivered_at ?? null,
         note: r.note ?? null,
         lines: (r.order_lines ?? []).map((l: any) => ({
           article_id: l.article_id,
@@ -125,9 +127,18 @@ function Archives() {
                     ))}
                     <td className="py-3 px-4 text-right align-top">
                       <div className="inline-flex flex-col items-end gap-1">
-                        <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]}`}>
-                          {STATUS_LABEL[r.status]}
-                        </span>
+                        {r.delivered_at ? (
+                          <span
+                            className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-blue-600 text-white ring-blue-700"
+                            title={`Livrée à ${format(new Date(r.delivered_at), "HH:mm")}`}
+                          >
+                            Livrée
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]}`}>
+                            {STATUS_LABEL[r.status]}
+                          </span>
+                        )}
                         <button
                           onClick={() => unarchive(r.id)}
                           className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-primary text-primary-foreground hover:brightness-95"
