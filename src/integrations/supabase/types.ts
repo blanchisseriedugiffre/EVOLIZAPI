@@ -93,18 +93,24 @@ export type Database = {
           client_id: string
           created_at: string
           id: string
+          lat: number | null
+          lng: number | null
           name: string
         }
         Insert: {
           client_id: string
           created_at?: string
           id?: string
+          lat?: number | null
+          lng?: number | null
           name: string
         }
         Update: {
           client_id?: string
           created_at?: string
           id?: string
+          lat?: number | null
+          lng?: number | null
           name?: string
         }
         Relationships: [
@@ -158,6 +164,7 @@ export type Database = {
           archived: boolean
           client_id: string
           created_at: string
+          delivered_at: string | null
           delivery_date: string
           id: string
           location_id: string
@@ -171,6 +178,7 @@ export type Database = {
           archived?: boolean
           client_id: string
           created_at?: string
+          delivered_at?: string | null
           delivery_date: string
           id?: string
           location_id: string
@@ -184,6 +192,7 @@ export type Database = {
           archived?: boolean
           client_id?: string
           created_at?: string
+          delivered_at?: string | null
           delivery_date?: string
           id?: string
           location_id?: string
@@ -266,7 +275,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "client"
+      app_role: "admin" | "client" | "driver"
       order_status: "todo" | "in_progress" | "done"
     }
     CompositeTypes: {
@@ -395,7 +404,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "client"],
+      app_role: ["admin", "client", "driver"],
       order_status: ["todo", "in_progress", "done"],
     },
   },
