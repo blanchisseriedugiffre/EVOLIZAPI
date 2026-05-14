@@ -54,8 +54,13 @@ function ClientsAdmin() {
   }
   useEffect(() => { load(); }, []);
 
+  function displayUsername(email: string) {
+    const suffix = `@${USERNAME_EMAIL_DOMAIN}`;
+    return email.endsWith(suffix) ? email.slice(0, -suffix.length) : email;
+  }
+
   async function removeClient(c: ClientRow) {
-    if (!confirm(`Supprimer le compte ${c.email} ?`)) return;
+    if (!confirm(`Supprimer le compte ${displayUsername(c.email)} ?`)) return;
     try { await deleteFn({ data: { userId: c.id } }); toast.success("Supprimé"); load(); }
     catch (e: any) { toast.error(e?.message ?? "Erreur"); }
   }
