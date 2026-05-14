@@ -42,6 +42,8 @@ function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: 
 export function DriverToday() {
   const [orders, setOrders] = useState<DriverOrder[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [containersEditId, setContainersEditId] = useState<string | null>(null);
+  const [containersValue, setContainersValue] = useState("");
   const [pos, setPos] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -199,14 +201,14 @@ export function DriverToday() {
                   )}
                 </div>
                 <div className="shrink-0 flex items-center gap-1.5">
-                  {o.containers && (
-                    <span
-                      className="inline-flex items-center justify-center px-2 py-1 rounded-md text-[11px] font-bold tabular-nums bg-background ring-1 ring-border text-foreground"
-                      title="Nbre de chariots/sacs"
-                    >
-                      {o.containers}
-                    </span>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setContainersValue(o.containers ?? ""); setContainersEditId(o.id); }}
+                    className="inline-flex items-center justify-center px-2 py-1 min-w-[32px] rounded-md text-[11px] font-bold tabular-nums bg-background ring-1 ring-border text-foreground hover:bg-muted"
+                    title="Nbre de chariots/sacs (cliquer pour modifier)"
+                  >
+                    {o.containers || <span className="text-muted-foreground/50">·</span>}
+                  </button>
                   {statusBadge(o)}
                 </div>
               </div>
@@ -282,6 +284,48 @@ export function DriverToday() {
               </>
             );
           })()}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={containersEditId !== null} onOpenChange={(o) => { if (!o) { setContainersEditId(null); setContainersValue(""); } }}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>Nbre de chariots ou sacs ?</DialogTitle>
+          </DialogHeader>
+          <input
+            type="text"
+            maxLength={3}
+            value={containersValue}
+            onChange={(e) => setContainersValue(e.target.value.replace(/[^A-Za-z0-9]/g, "").slice(0, 3))}
+            autoFocus
+            placeholder="ex: 3"
+            className="w-full px-3 py-2 text-center text-lg font-mono rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => { setContainersEditId(null); setContainersValue(""); }}
+              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold ring-1 ring-border bg-background hover:bg-muted"
+            >
+              Ignorer
+            </button>
+            <button
+              type="button"
+              onClick={async () => {
+                const id = containersEditId;
+                if (!id) return;
+                const value = containersValue.trim() || null;
+                setOrders(curr => curr.map(x => x.id === id ? { ...x, containers: value } : x));
+                const { error } = await supabase.from("orders").update({ containers: value }).eq("id", id);
+                if (error) toast.error(error.message);
+                setContainersEditId(null);
+                setContainersValue("");
+              }}
+              className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-primary text-primary-foreground hover:brightness-95"
+            >
+              Valider
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

@@ -112,16 +112,26 @@ function Dashboard() {
   }
 
   async function finalizeDone(id: string, containers: string | null) {
-    setRows(current => current.map(row => row.id === id ? { ...row, status: "done", containers: containers ?? row.containers } : row));
-    const payload: { status: OrderStatus; containers?: string | null } = { status: "done" };
+    const row = rows.find(r => r.id === id);
+    const shouldAdvance = row?.status !== "done";
+    setRows(current => current.map(r => r.id === id ? { ...r, status: shouldAdvance ? "done" : r.status, containers: containers ?? r.containers } : r));
+    const payload: { status?: OrderStatus; containers?: string | null } = {};
+    if (shouldAdvance) payload.status = "done";
     if (containers !== null) payload.containers = containers;
-    const { error } = await supabase.from("orders").update(payload).eq("id", id);
-    if (error) {
-      toast.error(error.message);
-      load();
+    if (Object.keys(payload).length > 0) {
+      const { error } = await supabase.from("orders").update(payload).eq("id", id);
+      if (error) {
+        toast.error(error.message);
+        load();
+      }
     }
     setContainersPromptId(null);
     setContainersValue("");
+  }
+
+  function openContainersEditor(r: Row) {
+    setContainersValue(r.containers ?? "");
+    setContainersPromptId(r.id);
   }
 
   async function markDelivered(id: string, orderNumber: number) {
@@ -288,13 +298,15 @@ function Dashboard() {
                               Modifier
                             </button>
                           )}
-                          {r.containers && (
-                            <span
-                              className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground tabular-nums"
-                              title="Nbre de chariots/sacs"
+                          {(r.status === "in_progress" || r.status === "done") && (
+                            <button
+                              type="button"
+                              onClick={() => openContainersEditor(r)}
+                              className="inline-flex items-center justify-center px-2 py-0.5 min-w-[28px] rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground tabular-nums hover:brightness-95"
+                              title="Nbre de chariots/sacs (cliquer pour modifier)"
                             >
-                              {r.containers}
-                            </span>
+                              {r.containers || <span className="text-muted-foreground/50">·</span>}
+                            </button>
                           )}
                           {r.delivered_at ? (
                             <span
