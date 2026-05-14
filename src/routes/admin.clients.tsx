@@ -148,7 +148,12 @@ function CreateClientForm({ onCreated, createFn }: { onCreated: () => void; crea
 }
 
 function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articles: { id: string; name: string }[]; onSaved: () => void }) {
+  const suffix = `@${USERNAME_EMAIL_DOMAIN}`;
+  const currentUsername = client.email.endsWith(suffix) ? client.email.slice(0, -suffix.length) : client.email;
   const [name, setName] = useState(client.name);
+  const [username, setUsername] = useState(currentUsername);
+  const [password, setPassword] = useState("");
+  const updateCredsFn = useServerFn(updateClientCredentials);
   const [logoUrl, setLogoUrl] = useState<string | null>(client.logo_url);
   const [uploading, setUploading] = useState(false);
   const [locations, setLocations] = useState(client.locations);
