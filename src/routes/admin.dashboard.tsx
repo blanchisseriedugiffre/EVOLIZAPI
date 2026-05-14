@@ -136,15 +136,14 @@ function Dashboard() {
                   <tr key={r.id} className={`${STATUS_ROW_CLASS[r.status]} hover:brightness-[0.98] transition`}>
                     <td className="py-3 px-4 align-top">
                       <div className="font-medium">{format(new Date(r.delivery_date), "EEE d MMM", { locale: fr })}</div>
-                      <div className="text-xs text-muted-foreground">{format(new Date(r.created_at), "HH:mm")}</div>
                     </td>
                     <td className="py-3 px-4 align-top">
                       <div className="font-medium">{r.client_name}</div>
                       <div className="text-xs text-muted-foreground">{r.location_name}</div>
                     </td>
                     <td className="py-3 px-4 font-mono text-xs text-muted-foreground align-top whitespace-nowrap">
-                      #{r.order_number}
-                      {r.note && <span className="ml-2 inline-block"><AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} /></span>}
+                      <div>#{r.order_number}{r.note && <span className="ml-2 inline-block"><AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} /></span>}</div>
+                      <div className="text-[10px] mt-0.5">{format(new Date(r.created_at), "d MMM HH:mm", { locale: fr })}</div>
                     </td>
                     {articles.map(a => (
                       <td key={a.id} className="py-3 px-3 text-center align-top tabular-nums">
