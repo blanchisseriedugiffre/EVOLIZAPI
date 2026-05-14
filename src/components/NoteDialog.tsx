@@ -115,7 +115,7 @@ export function AdminNoteCell({
       <button
         type="button"
         onClick={openAndMarkSeen}
-        className={`inline-flex items-center justify-center h-10 w-12 rounded-md bg-yellow-300 ring-1 ring-yellow-600/50 align-middle text-yellow-900 hover:bg-yellow-400 transition ${seen ? "" : "note-blink"}`}
+        className={`inline-flex items-center justify-center h-10 w-12 rounded-md ring-1 align-middle transition ${seen ? "bg-white ring-border text-muted-foreground hover:bg-muted" : "bg-yellow-300 ring-yellow-600/50 text-yellow-900 hover:bg-yellow-400 note-blink"}`}
         title={seen ? "Note (lue)" : "Nouvelle note !"}
         aria-label="Voir la note"
       >
