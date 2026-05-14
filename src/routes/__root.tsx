@@ -47,8 +47,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Atelier — Gestion des commandes" },
-      { name: "description", content: "Plateforme de prise et suivi des commandes pour artisans livreurs." },
+      { title: "BLANCHISSERIE DU GIFFRE commandes" },
+      { name: "description", content: "Plateforme de prise et suivi des commandes" },
+      { property: "og:title", content: "BLANCHISSERIE DU GIFFRE commandes" },
+      { name: "twitter:title", content: "BLANCHISSERIE DU GIFFRE commandes" },
+      { property: "og:description", content: "Plateforme de prise et suivi des commandes" },
+      { name: "twitter:description", content: "Plateforme de prise et suivi des commandes" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/30e123a0-686c-43c5-b26d-07e671d968f8/id-preview-ebdcfe0a--55d0888f-ba2b-4e3f-9379-99ffe2fb3a7a.lovable.app-1778753575936.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/30e123a0-686c-43c5-b26d-07e671d968f8/id-preview-ebdcfe0a--55d0888f-ba2b-4e3f-9379-99ffe2fb3a7a.lovable.app-1778753575936.png" },
+      { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:type", content: "website" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
