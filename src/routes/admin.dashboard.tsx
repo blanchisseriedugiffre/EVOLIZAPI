@@ -288,6 +288,14 @@ function Dashboard() {
                               Modifier
                             </button>
                           )}
+                          {r.containers && (
+                            <span
+                              className="inline-flex items-center justify-center px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground tabular-nums"
+                              title="Nbre de chariots/sacs"
+                            >
+                              {r.containers}
+                            </span>
+                          )}
                           {r.delivered_at ? (
                             <span
                               className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-blue-600 text-white ring-blue-700"
