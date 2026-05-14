@@ -97,6 +97,19 @@ function Dashboard() {
     }
   }
 
+  async function markDelivered(id: string, orderNumber: number) {
+    if (!confirm(`Marquer la commande #${orderNumber} comme livrée ?`)) return;
+    const now = new Date().toISOString();
+    setRows(current => current.map(row => row.id === id ? { ...row, status: "done", delivered_at: now } : row));
+    const { error } = await supabase.from("orders").update({ status: "done", delivered_at: now }).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+    } else {
+      toast.success("Commande marquée livrée");
+    }
+  }
+
   function printOrder(r: Row) {
     const printedStatus: OrderStatus = "in_progress";
     if (r.status !== printedStatus) setStatus(r.id, printedStatus);
@@ -256,13 +269,22 @@ function Dashboard() {
                               Livrée
                             </span>
                           ) : (
-                            <button
-                              onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
-                              className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
-                              title="Cliquer pour faire avancer le statut"
-                            >
-                              {STATUS_LABEL[r.status]}
-                            </button>
+                            <>
+                              <button
+                                onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
+                                className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
+                                title="Cliquer pour faire avancer le statut"
+                              >
+                                {STATUS_LABEL[r.status]}
+                              </button>
+                              <button
+                                onClick={() => markDelivered(r.id, r.order_number)}
+                                className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-blue-600 text-white ring-blue-700 hover:bg-blue-700"
+                                title="Marquer comme livrée"
+                              >
+                                Livrée
+                              </button>
+                            </>
                           )}
                         </div>
                         {r.status === "done" && (
