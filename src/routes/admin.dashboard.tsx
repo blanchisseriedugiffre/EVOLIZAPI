@@ -269,22 +269,13 @@ function Dashboard() {
                               Livrée
                             </span>
                           ) : (
-                            <>
-                              <button
-                                onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
-                                className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
-                                title="Cliquer pour faire avancer le statut"
-                              >
-                                {STATUS_LABEL[r.status]}
-                              </button>
-                              <button
-                                onClick={() => markDelivered(r.id, r.order_number)}
-                                className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-blue-600 text-white ring-blue-700 hover:bg-blue-700"
-                                title="Marquer comme livrée"
-                              >
-                                Livrée
-                              </button>
-                            </>
+                            <button
+                              onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
+                              className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
+                              title="Cliquer pour faire avancer le statut"
+                            >
+                              {STATUS_LABEL[r.status]}
+                            </button>
                           )}
                         </div>
                         {r.status === "done" && (
