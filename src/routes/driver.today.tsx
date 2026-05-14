@@ -40,6 +40,7 @@ function distanceMeters(a: { lat: number; lng: number }, b: { lat: number; lng: 
 
 function DriverToday() {
   const [orders, setOrders] = useState<DriverOrder[]>([]);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [pos, setPos] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
