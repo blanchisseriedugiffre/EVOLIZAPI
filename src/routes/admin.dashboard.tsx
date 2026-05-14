@@ -36,6 +36,7 @@ function Dashboard() {
       supabase
         .from("orders")
         .select("id, order_number, delivery_date, created_at, status, note, note_seen_by_admin, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
+        .eq("archived", false)
         .order("delivery_date", { ascending: true })
         .order("created_at", { ascending: true }),
       supabase.from("articles").select("id, name").order("name"),
