@@ -19,6 +19,7 @@ import { Route as AdminNewOrderRouteImport } from './routes/admin.new-order'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminClientsRouteImport } from './routes/admin.clients'
 import { Route as AdminCatalogRouteImport } from './routes/admin.catalog'
+import { Route as AdminArchivesRouteImport } from './routes/admin.archives'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -70,12 +71,18 @@ const AdminCatalogRoute = AdminCatalogRouteImport.update({
   path: '/catalog',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminArchivesRoute = AdminArchivesRouteImport.update({
+  id: '/archives',
+  path: '/archives',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/client': typeof ClientRouteWithChildren
   '/login': typeof LoginRoute
+  '/admin/archives': typeof AdminArchivesRoute
   '/admin/catalog': typeof AdminCatalogRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -88,6 +95,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/client': typeof ClientRouteWithChildren
   '/login': typeof LoginRoute
+  '/admin/archives': typeof AdminArchivesRoute
   '/admin/catalog': typeof AdminCatalogRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -101,6 +109,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/client': typeof ClientRouteWithChildren
   '/login': typeof LoginRoute
+  '/admin/archives': typeof AdminArchivesRoute
   '/admin/catalog': typeof AdminCatalogRoute
   '/admin/clients': typeof AdminClientsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
@@ -115,6 +124,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/client'
     | '/login'
+    | '/admin/archives'
     | '/admin/catalog'
     | '/admin/clients'
     | '/admin/dashboard'
@@ -127,6 +137,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/client'
     | '/login'
+    | '/admin/archives'
     | '/admin/catalog'
     | '/admin/clients'
     | '/admin/dashboard'
@@ -139,6 +150,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/client'
     | '/login'
+    | '/admin/archives'
     | '/admin/catalog'
     | '/admin/clients'
     | '/admin/dashboard'
@@ -226,10 +238,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminCatalogRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/archives': {
+      id: '/admin/archives'
+      path: '/archives'
+      fullPath: '/admin/archives'
+      preLoaderRoute: typeof AdminArchivesRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminArchivesRoute: typeof AdminArchivesRoute
   AdminCatalogRoute: typeof AdminCatalogRoute
   AdminClientsRoute: typeof AdminClientsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
@@ -237,6 +257,7 @@ interface AdminRouteChildren {
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminArchivesRoute: AdminArchivesRoute,
   AdminCatalogRoute: AdminCatalogRoute,
   AdminClientsRoute: AdminClientsRoute,
   AdminDashboardRoute: AdminDashboardRoute,
@@ -267,3 +288,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
