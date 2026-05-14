@@ -163,6 +163,7 @@ export type Database = {
         Row: {
           archived: boolean
           client_id: string
+          containers: string | null
           created_at: string
           delivered_at: string | null
           delivery_date: string
@@ -177,6 +178,7 @@ export type Database = {
         Insert: {
           archived?: boolean
           client_id: string
+          containers?: string | null
           created_at?: string
           delivered_at?: string | null
           delivery_date: string
@@ -191,6 +193,7 @@ export type Database = {
         Update: {
           archived?: boolean
           client_id?: string
+          containers?: string | null
           created_at?: string
           delivered_at?: string | null
           delivery_date?: string
