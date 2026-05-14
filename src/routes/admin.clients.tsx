@@ -226,6 +226,17 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
     <div className="space-y-6">
       <div className="space-y-1.5"><Label>Nom affiché</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
 
+      <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted/30 p-3">
+        <div className="space-y-1.5">
+          <Label>Nom d'utilisateur</Label>
+          <Input value={username} onChange={e => setUsername(e.target.value)} minLength={2} maxLength={60} pattern="[a-zA-Z0-9._\-]+" autoComplete="off" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Nouveau mot de passe</Label>
+          <Input type="password" value={password} onChange={e => setPassword(e.target.value)} minLength={4} placeholder="Laisser vide pour ne pas changer" autoComplete="new-password" />
+        </div>
+      </div>
+
       <div className="space-y-2">
         <Label>Logo du client</Label>
         <div className="flex items-center gap-4">
