@@ -118,7 +118,7 @@ function Dashboard() {
                 <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Client / Lieu</th>
                 <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">N°</th>
                 {articles.map(a => (
-                  <th key={a.id} className="py-3 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center whitespace-nowrap" title={a.name}>
+                  <th key={a.id} className="py-3 px-2 w-14 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center leading-tight break-words" title={a.name}>
                     {a.name.split(" ").slice(0, 2).join(" ")}
                   </th>
                 ))}
