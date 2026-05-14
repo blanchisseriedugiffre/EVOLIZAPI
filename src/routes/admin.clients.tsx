@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
-import { createClientAccount, deleteClientAccount, USERNAME_EMAIL_DOMAIN } from "@/lib/admin.functions";
+import { createClientAccount, deleteClientAccount, updateClientCredentials, USERNAME_EMAIL_DOMAIN } from "@/lib/admin.functions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -148,7 +148,12 @@ function CreateClientForm({ onCreated, createFn }: { onCreated: () => void; crea
 }
 
 function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articles: { id: string; name: string }[]; onSaved: () => void }) {
+  const suffix = `@${USERNAME_EMAIL_DOMAIN}`;
+  const currentUsername = client.email.endsWith(suffix) ? client.email.slice(0, -suffix.length) : client.email;
   const [name, setName] = useState(client.name);
+  const [username, setUsername] = useState(currentUsername);
+  const [password, setPassword] = useState("");
+  const updateCredsFn = useServerFn(updateClientCredentials);
   const [logoUrl, setLogoUrl] = useState<string | null>(client.logo_url);
   const [uploading, setUploading] = useState(false);
   const [locations, setLocations] = useState(client.locations);
@@ -180,6 +185,21 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
 
   async function save() {
     setSaving(true);
+    try {
+      const usernameChanged = username && username.toLowerCase() !== currentUsername.toLowerCase();
+      if (usernameChanged || password) {
+        await updateCredsFn({ data: {
+          userId: client.id,
+          ...(usernameChanged ? { username } : {}),
+          ...(password ? { password } : {}),
+        } });
+      }
+    } catch (e: any) {
+      setSaving(false);
+      toast.error(e?.message ?? "Erreur identifiants");
+      return;
+    }
+
     await supabase.from("profiles").update({ name, logo_url: logoUrl }).eq("id", client.id);
 
     // Locations: replace all (delete those missing, insert new)
@@ -205,6 +225,17 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
   return (
     <div className="space-y-6">
       <div className="space-y-1.5"><Label>Nom affiché</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
+
+      <div className="grid grid-cols-2 gap-3 rounded-lg border border-border bg-muted/30 p-3">
+        <div className="space-y-1.5">
+          <Label>Nom d'utilisateur</Label>
+          <Input value={username} onChange={e => setUsername(e.target.value)} minLength={2} maxLength={60} pattern="[a-zA-Z0-9._\-]+" autoComplete="off" />
+        </div>
+        <div className="space-y-1.5">
+          <Label>Nouveau mot de passe</Label>
+          <Input type="password" value={password} onChange={e => setPassword(e.target.value)} minLength={4} placeholder="Laisser vide pour ne pas changer" autoComplete="new-password" />
+        </div>
+      </div>
 
       <div className="space-y-2">
         <Label>Logo du client</Label>
