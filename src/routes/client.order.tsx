@@ -10,6 +10,7 @@ import { addDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
+import { ClientNoteButton } from "@/components/NoteDialog";
 
 const searchSchema = z.object({ id: z.string().uuid().optional() });
 
@@ -33,6 +34,8 @@ function NewOrder() {
   const [qty, setQty] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState<boolean>(!!editId);
+  const [draftNote, setDraftNote] = useState<string>("");
+  const [existingNote, setExistingNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
