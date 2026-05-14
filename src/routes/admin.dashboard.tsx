@@ -152,28 +152,30 @@ function Dashboard() {
                       </td>
                     ))}
                     <td className="py-3 px-4 text-right align-top">
-                      <div className="inline-flex flex-col items-stretch gap-1 min-w-24">
-                        <button
-                          onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
-                          className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
-                          title="Cliquer pour faire avancer le statut"
-                        >
-                          {STATUS_LABEL[r.status]}
-                        </button>
-                        {r.status === "todo" && (
-                          <Link
-                            to="/admin/new-order"
-                            search={{ orderId: r.id }}
-                            className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground hover:brightness-95"
-                            title="Modifier la commande"
+                      <div className="inline-flex flex-col items-end gap-1">
+                        <div className="inline-flex items-center gap-1.5">
+                          {r.status === "todo" && (
+                            <Link
+                              to="/admin/new-order"
+                              search={{ orderId: r.id }}
+                              className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground hover:brightness-95"
+                              title="Modifier la commande"
+                            >
+                              Modifier
+                            </Link>
+                          )}
+                          <button
+                            onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
+                            className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
+                            title="Cliquer pour faire avancer le statut"
                           >
-                            Modifier
-                          </Link>
-                        )}
+                            {STATUS_LABEL[r.status]}
+                          </button>
+                        </div>
                         {r.status === "done" && (
                           <button
                             onClick={() => archiveOrder(r.id)}
-                            className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-muted text-foreground hover:brightness-95"
+                            className="inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-muted text-foreground hover:brightness-95"
                             title="Archiver la commande"
                           >
                             Archiver
