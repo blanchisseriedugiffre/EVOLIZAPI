@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { STATUS_LABEL, STATUS_NEXT, STATUS_ROW_CLASS, STATUS_BADGE_CLASS, type OrderStatus } from "@/lib/orders";
@@ -26,6 +26,7 @@ interface Row {
 }
 
 function Dashboard() {
+  const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
   const [articles, setArticles] = useState<{ id: string; name: string }[]>([]);
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
@@ -203,14 +204,17 @@ function Dashboard() {
                             </button>
                           )}
                           {r.status === "todo" && (
-                            <Link
-                              to="/admin/new-order"
-                              search={{ orderId: r.id }}
+                            <button
+                              onClick={() => {
+                                if (window.confirm("ÊTES-VOUS SÛR DE VOULOIR MODIFIER LA COMMANDE ?")) {
+                                  navigate({ to: "/admin/new-order", search: { orderId: r.id } });
+                                }
+                              }}
                               className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground hover:brightness-95"
                               title="Modifier la commande"
                             >
                               Modifier
-                            </Link>
+                            </button>
                           )}
                           <button
                             onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
