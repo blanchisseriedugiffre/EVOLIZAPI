@@ -10,6 +10,7 @@ import { addDays, format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { z } from "zod";
+import { ClientNoteButton } from "@/components/NoteDialog";
 
 const searchSchema = z.object({ id: z.string().uuid().optional() });
 
@@ -33,6 +34,8 @@ function NewOrder() {
   const [qty, setQty] = useState<Record<string, number>>({});
   const [submitting, setSubmitting] = useState(false);
   const [loadingEdit, setLoadingEdit] = useState<boolean>(!!editId);
+  const [draftNote, setDraftNote] = useState<string>("");
+  const [existingNote, setExistingNote] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -55,7 +58,7 @@ function NewOrder() {
     (async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("id, status, location_id, delivery_date, client_id, order_lines(article_id, quantity)")
+        .select("id, status, location_id, delivery_date, client_id, note, order_lines(article_id, quantity)")
         .eq("id", editId)
         .maybeSingle();
       if (error || !data) { toast.error("Commande introuvable"); navigate({ to: "/client/history" }); return; }
@@ -63,6 +66,7 @@ function NewOrder() {
       if (data.status !== "todo") { toast.error("Cette commande n'est plus modifiable"); navigate({ to: "/client/history" }); return; }
       setLocationId(data.location_id);
       setDate(data.delivery_date);
+      setExistingNote((data as any).note ?? null);
       const q: Record<string, number> = {};
       for (const l of (data.order_lines ?? []) as any[]) q[l.article_id] = l.quantity;
       setQty(q);
@@ -116,7 +120,14 @@ function NewOrder() {
     }
 
     const { data: order, error } = await supabase.from("orders")
-      .insert({ client_id: user.id, location_id: locationId, delivery_date: date, status: "todo" })
+      .insert({
+        client_id: user.id,
+        location_id: locationId,
+        delivery_date: date,
+        status: "todo",
+        note: draftNote.trim() || null,
+        note_seen_by_admin: draftNote.trim() ? false : true,
+      })
       .select("id").single();
     if (error || !order) { setSubmitting(false); return toast.error(error?.message ?? "Erreur"); }
     const { error: e2 } = await supabase.from("order_lines").insert(lines.map(l => ({ ...l, order_id: order.id })));
@@ -233,6 +244,13 @@ function NewOrder() {
             <div className="flex justify-between text-muted-foreground"><span>Lieu</span><span className="text-foreground">{locations.find(l => l.id === locationId)?.name}</span></div>
             <div className="flex justify-between text-muted-foreground"><span>Date</span><span className="text-foreground">{date && format(new Date(date), "EEE d MMM", { locale: fr })}</span></div>
             <div className="flex justify-between text-muted-foreground"><span>Articles</span><span className="text-foreground tabular-nums">{total}</span></div>
+          </div>
+          <div className="flex justify-center pt-1">
+            {editId ? (
+              <ClientNoteButton orderId={editId} initialNote={existingNote} />
+            ) : (
+              <ClientNoteButton orderId={null} initialNote={draftNote} onLocalChange={setDraftNote} />
+            )}
           </div>
           <Button className="w-full" disabled={submitting || total === 0} onClick={submit}>
             {submitting ? "Envoi…" : editId ? "Enregistrer" : "Valider la commande"}

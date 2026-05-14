@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
+import { AdminNoteCell } from "@/components/NoteDialog";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
@@ -19,6 +20,8 @@ interface Row {
   delivery_date: string;
   created_at: string;
   status: OrderStatus;
+  note: string | null;
+  note_seen_by_admin: boolean;
   lines: { article_id: string; article_name: string; quantity: number }[];
 }
 
@@ -32,7 +35,7 @@ function Dashboard() {
     const [{ data: o }, { data: arts }] = await Promise.all([
       supabase
         .from("orders")
-        .select("id, order_number, delivery_date, created_at, status, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
+        .select("id, order_number, delivery_date, created_at, status, note, note_seen_by_admin, profiles(name), delivery_locations(name), order_lines(article_id, quantity, articles(name))")
         .order("delivery_date", { ascending: true })
         .order("created_at", { ascending: true }),
       supabase.from("articles").select("id, name").order("name"),
@@ -47,6 +50,8 @@ function Dashboard() {
         delivery_date: r.delivery_date,
         created_at: r.created_at,
         status: r.status,
+        note: r.note ?? null,
+        note_seen_by_admin: r.note_seen_by_admin ?? true,
         lines: (r.order_lines ?? []).map((l: any) => ({
           article_id: l.article_id,
           article_name: l.articles?.name ?? "?",
@@ -130,7 +135,10 @@ function Dashboard() {
                       <div className="font-medium">{r.client_name}</div>
                       <div className="text-xs text-muted-foreground">{r.location_name}</div>
                     </td>
-                    <td className="py-3 px-4 font-mono text-xs text-muted-foreground align-top">#{r.order_number}</td>
+                    <td className="py-3 px-4 font-mono text-xs text-muted-foreground align-top whitespace-nowrap">
+                      #{r.order_number}
+                      {r.note && <span className="ml-2 inline-block"><AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} /></span>}
+                    </td>
                     {articles.map(a => (
                       <td key={a.id} className="py-3 px-3 text-center align-top tabular-nums">
                         {qtyByArt.get(a.id) ?? <span className="text-muted-foreground/40">·</span>}

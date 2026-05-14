@@ -6,6 +6,7 @@ import { STATUS_LABEL, STATUS_ROW_CLASS, STATUS_BADGE_CLASS, type OrderStatus } 
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { Pencil } from "lucide-react";
+import { ClientNoteButton } from "@/components/NoteDialog";
 
 export const Route = createFileRoute("/client/history")({
   component: History,
@@ -13,7 +14,7 @@ export const Route = createFileRoute("/client/history")({
 
 interface Row {
   id: string; order_number: number; delivery_date: string; created_at: string;
-  status: OrderStatus; location_name: string;
+  status: OrderStatus; location_name: string; note: string | null;
   lines: { name: string; quantity: number }[];
 }
 
@@ -24,12 +25,12 @@ function History() {
   async function load() {
     if (!user) return;
     const { data } = await supabase.from("orders")
-      .select("id, order_number, delivery_date, created_at, status, delivery_locations(name), order_lines(quantity, articles(name))")
+      .select("id, order_number, delivery_date, created_at, status, note, delivery_locations(name), order_lines(quantity, articles(name))")
       .eq("client_id", user.id)
       .order("created_at", { ascending: false });
     setRows((data ?? []).map((r: any) => ({
       id: r.id, order_number: r.order_number, delivery_date: r.delivery_date, created_at: r.created_at,
-      status: r.status, location_name: r.delivery_locations?.name ?? "—",
+      status: r.status, location_name: r.delivery_locations?.name ?? "—", note: r.note ?? null,
       lines: (r.order_lines ?? []).map((l: any) => ({ name: l.articles?.name ?? "?", quantity: l.quantity })),
     })));
   }
@@ -62,9 +63,12 @@ function History() {
               <div className="flex items-center gap-2">
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]}`}>{STATUS_LABEL[r.status]}</span>
                 {r.status === "todo" && (
-                  <Link to="/client/order" search={{ id: r.id }} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background hover:bg-accent">
-                    <Pencil className="size-3" /> Reprendre
-                  </Link>
+                  <>
+                    <ClientNoteButton orderId={r.id} initialNote={r.note} size="sm" />
+                    <Link to="/client/order" search={{ id: r.id }} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background hover:bg-accent">
+                      <Pencil className="size-3" /> Reprendre
+                    </Link>
+                  </>
                 )}
               </div>
             </div>
