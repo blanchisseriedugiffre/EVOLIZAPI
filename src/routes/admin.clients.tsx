@@ -167,7 +167,7 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
   function addLoc() {
     const n = newLoc.trim(); if (!n) return;
     if (locations.length >= 10) { toast.error("Maximum 10 lieux"); return; }
-    setLocations([...locations, { id: `tmp-${Date.now()}`, name: n }]); setNewLoc("");
+    setLocations([...locations, { id: `tmp-${Date.now()}`, name: n, lat: null, lng: null }]); setNewLoc("");
   }
   function removeLoc(id: string) { setLocations(locations.filter(l => l.id !== id)); }
 
