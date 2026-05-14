@@ -245,6 +245,13 @@ function NewOrder() {
             <div className="flex justify-between text-muted-foreground"><span>Date</span><span className="text-foreground">{date && format(new Date(date), "EEE d MMM", { locale: fr })}</span></div>
             <div className="flex justify-between text-muted-foreground"><span>Articles</span><span className="text-foreground tabular-nums">{total}</span></div>
           </div>
+          <div className="flex justify-center pt-1">
+            {editId ? (
+              <ClientNoteButton orderId={editId} initialNote={existingNote} />
+            ) : (
+              <ClientNoteButton orderId={null} initialNote={draftNote} onLocalChange={setDraftNote} />
+            )}
+          </div>
           <Button className="w-full" disabled={submitting || total === 0} onClick={submit}>
             {submitting ? "Envoi…" : editId ? "Enregistrer" : "Valider la commande"}
           </Button>
