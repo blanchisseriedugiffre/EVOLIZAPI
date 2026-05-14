@@ -157,8 +157,25 @@ function Dashboard() {
                         className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
                         title="Cliquer pour faire avancer le statut"
                       >
-                        {STATUS_LABEL[r.status]}
-                      </button>
+                    <td className="py-3 px-4 text-right align-top">
+                      <div className="inline-flex flex-col items-end gap-1">
+                        <button
+                          onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
+                          className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
+                          title="Cliquer pour faire avancer le statut"
+                        >
+                          {STATUS_LABEL[r.status]}
+                        </button>
+                        {r.status === "done" && (
+                          <button
+                            onClick={() => archiveOrder(r.id)}
+                            className="inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 bg-muted text-foreground hover:brightness-95"
+                            title="Archiver la commande"
+                          >
+                            Archiver
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
