@@ -208,7 +208,16 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
     const keptIds = new Set(kept.map(l => l.id));
     const toDelete = existing.filter(id => !keptIds.has(id));
     if (toDelete.length) await supabase.from("delivery_locations").delete().in("id", toDelete);
-    const toInsert = locations.filter(l => l.id.startsWith("tmp-")).map(l => ({ client_id: client.id, name: l.name }));
+    // Update names of kept locations if changed
+    const originalById = new Map(client.locations.map(l => [l.id, l.name]));
+    const toUpdate = kept.filter(l => {
+      const name = l.name.trim();
+      return name && originalById.get(l.id) !== name;
+    });
+    for (const l of toUpdate) {
+      await supabase.from("delivery_locations").update({ name: l.name.trim() }).eq("id", l.id);
+    }
+    const toInsert = locations.filter(l => l.id.startsWith("tmp-") && l.name.trim()).map(l => ({ client_id: client.id, name: l.name.trim() }));
     if (toInsert.length) await supabase.from("delivery_locations").insert(toInsert);
 
     await supabase.from("client_delivery_days").delete().eq("client_id", client.id);
