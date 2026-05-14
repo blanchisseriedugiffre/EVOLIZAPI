@@ -208,7 +208,16 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
     const keptIds = new Set(kept.map(l => l.id));
     const toDelete = existing.filter(id => !keptIds.has(id));
     if (toDelete.length) await supabase.from("delivery_locations").delete().in("id", toDelete);
-    const toInsert = locations.filter(l => l.id.startsWith("tmp-")).map(l => ({ client_id: client.id, name: l.name }));
+    // Update names of kept locations if changed
+    const originalById = new Map(client.locations.map(l => [l.id, l.name]));
+    const toUpdate = kept.filter(l => {
+      const name = l.name.trim();
+      return name && originalById.get(l.id) !== name;
+    });
+    for (const l of toUpdate) {
+      await supabase.from("delivery_locations").update({ name: l.name.trim() }).eq("id", l.id);
+    }
+    const toInsert = locations.filter(l => l.id.startsWith("tmp-") && l.name.trim()).map(l => ({ client_id: client.id, name: l.name.trim() }));
     if (toInsert.length) await supabase.from("delivery_locations").insert(toInsert);
 
     await supabase.from("client_delivery_days").delete().eq("client_id", client.id);
@@ -263,8 +272,12 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
         <Label className="mb-2 block">Lieux de livraison ({locations.length}/10)</Label>
         <div className="space-y-2">
           {locations.map(l => (
-            <div key={l.id} className="flex items-center gap-2 bg-muted/50 rounded-md px-3 py-1.5 text-sm">
-              <span className="flex-1">{l.name}</span>
+            <div key={l.id} className="flex items-center gap-2 bg-muted/50 rounded-md px-2 py-1 text-sm">
+              <Input
+                value={l.name}
+                onChange={e => setLocations(locations.map(x => x.id === l.id ? { ...x, name: e.target.value } : x))}
+                className="flex-1 h-8"
+              />
               <button type="button" onClick={() => removeLoc(l.id)} className="text-muted-foreground hover:text-destructive"><X className="size-4" /></button>
             </div>
           ))}
