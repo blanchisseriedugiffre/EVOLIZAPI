@@ -38,8 +38,8 @@ function AdminSettings() {
 
   async function updatePassword(e: FormEvent) {
     e.preventDefault();
-    if (password.length < 8) {
-      toast.error("Mot de passe trop court", { description: "Au moins 8 caractères." });
+    if (password.length < 6) {
+      toast.error("Mot de passe trop court", { description: "Au moins 6 caractères." });
       return;
     }
     if (password !== confirm) {
@@ -89,7 +89,7 @@ function AdminSettings() {
       <form onSubmit={updatePassword} className="space-y-4 rounded-lg border border-border bg-card p-6">
         <div>
           <h2 className="text-base font-medium">Mot de passe</h2>
-          <p className="text-xs text-muted-foreground mt-1">Au moins 8 caractères.</p>
+          <p className="text-xs text-muted-foreground mt-1">Au moins 6 caractères.</p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Nouveau mot de passe</Label>
