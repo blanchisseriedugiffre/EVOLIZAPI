@@ -160,8 +160,8 @@ function AdminNewOrder() {
     <div className="grid lg:grid-cols-12 gap-8">
       <div className="lg:col-span-8 space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Saisir une commande</h1>
-          <p className="text-sm text-muted-foreground mt-1">Créez une commande à la place d'un client.</p>
+          <h1 className="text-2xl font-semibold tracking-tight">{isEditing ? "Modifier la commande" : "Saisir une commande"}</h1>
+          <p className="text-sm text-muted-foreground mt-1">{isEditing ? "Ajustez les articles, le lieu ou la date." : "Créez une commande à la place d'un client."}</p>
         </div>
 
         <div className="p-5 rounded-xl ring-1 ring-black/5 bg-card space-y-4">
