@@ -11,6 +11,7 @@ function AdminLayout() {
   if (loading) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Chargement…</div>;
   if (!session) return <Navigate to="/login" />;
   if (session && !role) return <div className="min-h-screen grid place-items-center text-sm text-muted-foreground">Chargement…</div>;
+  if (role === "driver") return <Navigate to="/driver" />;
   if (role !== "admin") return <Navigate to="/client/order" />;
   return (
     <AppShell
