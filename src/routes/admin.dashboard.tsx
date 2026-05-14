@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { AdminNoteCell } from "@/components/NoteDialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
@@ -28,6 +29,7 @@ interface Row {
 function Dashboard() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
+  const [editConfirmId, setEditConfirmId] = useState<string | null>(null);
   const [articles, setArticles] = useState<{ id: string; name: string }[]>([]);
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
   const [loading, setLoading] = useState(true);
@@ -205,11 +207,7 @@ function Dashboard() {
                           )}
                           {r.status === "todo" && (
                             <button
-                              onClick={() => {
-                                if (window.confirm("ÊTES-VOUS SÛR DE VOULOIR MODIFIER LA COMMANDE ?")) {
-                                  navigate({ to: "/admin/new-order", search: { orderId: r.id } });
-                                }
-                              }}
+                              onClick={() => setEditConfirmId(r.id)}
                               className="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ring-border bg-background text-foreground hover:brightness-95"
                               title="Modifier la commande"
                             >
@@ -242,6 +240,25 @@ function Dashboard() {
           </table>
         </div>
       </div>
+      <AlertDialog open={editConfirmId !== null} onOpenChange={(o) => !o && setEditConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Modifier la commande</AlertDialogTitle>
+            <AlertDialogDescription>Êtes-vous sûr de vouloir modifier la commande ?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (editConfirmId) navigate({ to: "/admin/new-order", search: { orderId: editConfirmId } });
+                setEditConfirmId(null);
+              }}
+            >
+              Modifier
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
