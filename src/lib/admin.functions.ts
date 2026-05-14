@@ -108,3 +108,75 @@ export const deleteClientAccount = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const DRIVER_USERNAME_DEFAULT = "chauffeur";
+
+export const getDriverInfo = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
+    if (!roleRow) throw new Error("Forbidden");
+
+    const { data: drivers } = await supabaseAdmin
+      .from("user_roles").select("user_id").eq("role", "driver").limit(1);
+    if (!drivers?.length) return { exists: false as const };
+    const driverId = drivers[0].user_id;
+    const { data: prof } = await supabaseAdmin
+      .from("profiles").select("email").eq("id", driverId).maybeSingle();
+    const email = prof?.email ?? "";
+    const username = email.endsWith(`@${USERNAME_EMAIL_DOMAIN}`)
+      ? email.slice(0, -(`@${USERNAME_EMAIL_DOMAIN}`.length))
+      : email;
+    return { exists: true as const, userId: driverId, username };
+  });
+
+export const upsertDriverAccount = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({
+      username: z.string().trim().min(2).max(60).regex(/^[a-zA-Z0-9._-]+$/, "Caractères autorisés : lettres, chiffres, . _ -"),
+      password: z.string().min(4).max(72).optional(),
+    }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: roleRow } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
+    if (!roleRow) throw new Error("Forbidden");
+
+    const username = data.username.toLowerCase();
+    const email = `${username}@${USERNAME_EMAIL_DOMAIN}`;
+
+    // Find existing driver
+    const { data: drivers } = await supabaseAdmin
+      .from("user_roles").select("user_id").eq("role", "driver").limit(1);
+
+    if (drivers?.length) {
+      const driverId = drivers[0].user_id;
+      const updates: { email?: string; password?: string; user_metadata?: Record<string, unknown> } = {
+        email,
+        user_metadata: { username, name: "Chauffeur" },
+      };
+      if (data.password) updates.password = data.password;
+      const { error } = await supabaseAdmin.auth.admin.updateUserById(driverId, updates);
+      if (error) throw new Error(error.message);
+      await supabaseAdmin.from("profiles").update({ email, name: "Chauffeur" }).eq("id", driverId);
+      return { ok: true, userId: driverId, username };
+    }
+
+    if (!data.password) throw new Error("Mot de passe requis pour la création");
+
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: { name: "Chauffeur", username },
+    });
+    if (error) throw new Error(error.message);
+    const driverId = created.user.id;
+    await supabaseAdmin.from("profiles").update({ name: "Chauffeur" }).eq("id", driverId);
+    // Replace default 'client' role with 'driver'
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", driverId);
+    await supabaseAdmin.from("user_roles").insert({ user_id: driverId, role: "driver" });
+    return { ok: true, userId: driverId, username };
+  });
