@@ -19,7 +19,7 @@ export const Route = createFileRoute("/admin/clients")({
 interface ClientRow {
   id: string; name: string; email: string;
   logo_url: string | null;
-  locations: { id: string; name: string }[];
+  locations: { id: string; name: string; lat: number | null; lng: number | null }[];
   days: number[];
   article_ids: string[];
 }
@@ -39,7 +39,7 @@ function ClientsAdmin() {
     if (!ids.length) { setClients([]); return; }
     const [{ data: profs }, { data: locs }, { data: days }, { data: cArts }, { data: arts }] = await Promise.all([
       supabase.from("profiles").select("id, name, email, logo_url").in("id", ids),
-      supabase.from("delivery_locations").select("id, client_id, name").in("client_id", ids),
+      supabase.from("delivery_locations").select("id, client_id, name, lat, lng").in("client_id", ids),
       supabase.from("client_delivery_days").select("client_id, day_of_week").in("client_id", ids),
       supabase.from("client_articles").select("client_id, article_id").in("client_id", ids),
       supabase.from("articles").select("id, name").order("name"),
@@ -47,7 +47,7 @@ function ClientsAdmin() {
     setArticles(arts ?? []);
     setClients((profs ?? []).map(p => ({
       id: p.id, name: p.name, email: p.email, logo_url: p.logo_url,
-      locations: (locs ?? []).filter(l => l.client_id === p.id).map(l => ({ id: l.id, name: l.name })),
+      locations: (locs ?? []).filter(l => l.client_id === p.id).map(l => ({ id: l.id, name: l.name, lat: (l as any).lat ?? null, lng: (l as any).lng ?? null })),
       days: (days ?? []).filter(d => d.client_id === p.id).map(d => d.day_of_week).sort(),
       article_ids: (cArts ?? []).filter(c => c.client_id === p.id).map(c => c.article_id),
     })));
@@ -167,7 +167,7 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
   function addLoc() {
     const n = newLoc.trim(); if (!n) return;
     if (locations.length >= 10) { toast.error("Maximum 10 lieux"); return; }
-    setLocations([...locations, { id: `tmp-${Date.now()}`, name: n }]); setNewLoc("");
+    setLocations([...locations, { id: `tmp-${Date.now()}`, name: n, lat: null, lng: null }]); setNewLoc("");
   }
   function removeLoc(id: string) { setLocations(locations.filter(l => l.id !== id)); }
 
@@ -218,16 +218,17 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
         return;
       }
     }
-    // Update names of kept locations if changed
-    const originalById = new Map(client.locations.map(l => [l.id, l.name]));
-    const toUpdate = kept.filter(l => {
-      const name = l.name.trim();
-      return name && originalById.get(l.id) !== name;
-    });
-    for (const l of toUpdate) {
-      await supabase.from("delivery_locations").update({ name: l.name.trim() }).eq("id", l.id);
+    // Update kept locations (name + GPS) when changed
+    const originalById = new Map(client.locations.map(l => [l.id, l]));
+    for (const l of kept) {
+      const orig = originalById.get(l.id);
+      const newName = l.name.trim();
+      if (!newName) continue;
+      if (!orig || orig.name !== newName || orig.lat !== l.lat || orig.lng !== l.lng) {
+        await supabase.from("delivery_locations").update({ name: newName, lat: l.lat, lng: l.lng }).eq("id", l.id);
+      }
     }
-    const toInsert = locations.filter(l => l.id.startsWith("tmp-") && l.name.trim()).map(l => ({ client_id: client.id, name: l.name.trim() }));
+    const toInsert = locations.filter(l => l.id.startsWith("tmp-") && l.name.trim()).map(l => ({ client_id: client.id, name: l.name.trim(), lat: l.lat, lng: l.lng }));
     if (toInsert.length) await supabase.from("delivery_locations").insert(toInsert);
 
     await supabase.from("client_delivery_days").delete().eq("client_id", client.id);
@@ -280,15 +281,45 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
 
       <div>
         <Label className="mb-2 block">Lieux de livraison ({locations.length}/10)</Label>
+        <p className="text-[11px] text-muted-foreground mb-2">Coordonnées GPS facultatives — utilisées par l'app chauffeur pour détecter l'arrivée et le départ.</p>
         <div className="space-y-2">
           {locations.map(l => (
-            <div key={l.id} className="flex items-center gap-2 bg-muted/50 rounded-md px-2 py-1 text-sm">
-              <Input
-                value={l.name}
-                onChange={e => setLocations(locations.map(x => x.id === l.id ? { ...x, name: e.target.value } : x))}
-                className="flex-1 h-8"
-              />
-              <button type="button" onClick={() => removeLoc(l.id)} className="text-muted-foreground hover:text-destructive"><X className="size-4" /></button>
+            <div key={l.id} className="space-y-1.5 bg-muted/50 rounded-md px-2 py-2 text-sm">
+              <div className="flex items-center gap-2">
+                <Input
+                  value={l.name}
+                  onChange={e => setLocations(locations.map(x => x.id === l.id ? { ...x, name: e.target.value } : x))}
+                  className="flex-1 h-8"
+                  placeholder="Nom du lieu"
+                />
+                <button type="button" onClick={() => removeLoc(l.id)} className="text-muted-foreground hover:text-destructive"><X className="size-4" /></button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number" step="any" placeholder="Latitude"
+                  value={l.lat ?? ""}
+                  onChange={e => setLocations(locations.map(x => x.id === l.id ? { ...x, lat: e.target.value === "" ? null : Number(e.target.value) } : x))}
+                  className="h-8 text-xs"
+                />
+                <Input
+                  type="number" step="any" placeholder="Longitude"
+                  value={l.lng ?? ""}
+                  onChange={e => setLocations(locations.map(x => x.id === l.id ? { ...x, lng: e.target.value === "" ? null : Number(e.target.value) } : x))}
+                  className="h-8 text-xs"
+                />
+                <Button
+                  type="button" variant="ghost" size="sm" className="text-xs whitespace-nowrap"
+                  onClick={() => {
+                    if (!("geolocation" in navigator)) return toast.error("GPS indisponible");
+                    navigator.geolocation.getCurrentPosition(
+                      (p) => setLocations(curr => curr.map(x => x.id === l.id ? { ...x, lat: p.coords.latitude, lng: p.coords.longitude } : x)),
+                      (err) => toast.error(err.message || "Position indisponible"),
+                      { enableHighAccuracy: true, timeout: 15000 },
+                    );
+                  }}
+                  title="Utiliser ma position actuelle"
+                >📍 Ici</Button>
+              </div>
             </div>
           ))}
           <div className="flex gap-2">
