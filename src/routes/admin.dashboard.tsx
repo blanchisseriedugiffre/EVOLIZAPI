@@ -101,7 +101,7 @@ function Dashboard() {
 </style></head><body>
   <h1>Commande #${r.order_number}</h1>
   <hr/>
-  <div class="row"><span class="label">Lieu:</span> <b>${r.location_name}</b></div>
+  <div class="row"><span class="label">Lieu:</span> <b style="font-size:21px">${r.location_name}</b></div>
   <div class="row"><span class="label">Client:</span> ${r.client_name}</div>
   <div class="row"><span class="label">Livraison:</span> <b>${dateLivr}</b></div>
   <div class="row"><span class="label">Commandé le:</span> ${dateCmd}</div>
