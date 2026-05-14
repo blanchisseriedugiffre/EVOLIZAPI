@@ -41,6 +41,8 @@ function Dashboard() {
   const navigate = useNavigate();
   const [rows, setRows] = useState<Row[]>([]);
   const [editConfirmId, setEditConfirmId] = useState<string | null>(null);
+  const [containersPromptId, setContainersPromptId] = useState<string | null>(null);
+  const [containersValue, setContainersValue] = useState("");
   const [articles, setArticles] = useState<{ id: string; name: string }[]>([]);
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
   const [loading, setLoading] = useState(true);
@@ -95,6 +97,29 @@ function Dashboard() {
       toast.error(error.message);
       load();
     }
+  }
+
+  function advanceStatus(r: Row) {
+    const next = STATUS_NEXT[r.status];
+    if (r.status === "in_progress" && next === "done") {
+      setContainersValue("");
+      setContainersPromptId(r.id);
+      return;
+    }
+    setStatus(r.id, next);
+  }
+
+  async function finalizeDone(id: string, containers: string | null) {
+    setRows(current => current.map(row => row.id === id ? { ...row, status: "done" } : row));
+    const payload: { status: OrderStatus; containers?: string | null } = { status: "done" };
+    if (containers !== null) payload.containers = containers;
+    const { error } = await supabase.from("orders").update(payload).eq("id", id);
+    if (error) {
+      toast.error(error.message);
+      load();
+    }
+    setContainersPromptId(null);
+    setContainersValue("");
   }
 
   async function markDelivered(id: string, orderNumber: number) {
@@ -270,7 +295,7 @@ function Dashboard() {
                             </span>
                           ) : (
                             <button
-                              onClick={() => setStatus(r.id, STATUS_NEXT[r.status])}
+                              onClick={() => advanceStatus(r)}
                               className={`inline-flex items-center px-2.5 py-1 rounded-md text-[10px] font-semibold uppercase tracking-wider ring-1 ${STATUS_BADGE_CLASS[r.status]} cursor-pointer hover:brightness-95`}
                               title="Cliquer pour faire avancer le statut"
                             >
@@ -311,6 +336,39 @@ function Dashboard() {
               }}
             >
               Modifier
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={containersPromptId !== null} onOpenChange={(o) => { if (!o) { setContainersPromptId(null); setContainersValue(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Nbre de chariots ou sacs ?</AlertDialogTitle>
+            <AlertDialogDescription>Saisissez une valeur (3 caractères max) ou ignorez.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <input
+            type="text"
+            maxLength={3}
+            value={containersValue}
+            onChange={(e) => setContainersValue(e.target.value.replace(/[^A-Za-z0-9]/g, "").slice(0, 3))}
+            autoFocus
+            placeholder="ex: 3"
+            className="w-full px-3 py-2 text-center text-lg font-mono rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && containersPromptId) {
+                e.preventDefault();
+                finalizeDone(containersPromptId, containersValue.trim() || null);
+              }
+            }}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => containersPromptId && finalizeDone(containersPromptId, null)}>
+              Ignorer
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => containersPromptId && finalizeDone(containersPromptId, containersValue.trim() || null)}
+            >
+              Valider
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
