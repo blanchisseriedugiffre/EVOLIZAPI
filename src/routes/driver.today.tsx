@@ -182,57 +182,61 @@ function DriverToday() {
         {sorted.map(o => {
           const dist = pos && o.lat != null && o.lng != null ? distanceMeters(pos, { lat: o.lat, lng: o.lng }) : null;
           return (
-            <div key={o.id} className={`rounded-xl ring-1 ring-black/5 shadow-sm p-4 ${o.delivered_at ? "bg-blue-50" : "bg-card"}`}>
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="text-lg font-bold">{o.location_name}</div>
-                  <div className="text-sm text-muted-foreground">{o.client_name} · #{o.order_number}</div>
-                  {o.note && <div className="mt-2 text-xs bg-amber-50 border border-amber-200 rounded px-2 py-1">📝 {o.note}</div>}
+            <div key={o.id} className={`rounded-xl ring-1 ring-black/5 shadow-sm px-4 py-2.5 ${o.delivered_at ? "bg-blue-50" : "bg-card"}`}>
+              {/* Ligne 1 : Lieu + Note + Statut */}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-base font-bold truncate">{o.location_name}</span>
+                  {o.note && (
+                    <span
+                      title={o.note}
+                      className="inline-flex items-center max-w-[40vw] truncate text-[11px] bg-amber-50 border border-amber-200 text-amber-900 rounded px-1.5 py-0.5"
+                    >
+                      📝 {o.note}
+                    </span>
+                  )}
                 </div>
-                <div className="flex flex-col items-end gap-1.5 shrink-0">
-                  {statusBadge(o)}
+                <div className="shrink-0">{statusBadge(o)}</div>
+              </div>
+              {/* Ligne 2 : Client/#n° · distance · actions */}
+              <div className="mt-1 flex items-center justify-between gap-3">
+                <div className="text-xs text-muted-foreground truncate">
+                  {o.client_name} · #{o.order_number}
                   {dist != null && !o.delivered_at && (
-                    <span className="text-[10px] text-muted-foreground tabular-nums">
-                      {dist < 1000 ? `${Math.round(dist)} m` : `${(dist / 1000).toFixed(1)} km`}
-                    </span>
+                    <span className="ml-2 tabular-nums">· {dist < 1000 ? `${Math.round(dist)} m` : `${(dist / 1000).toFixed(1)} km`}</span>
                   )}
-                  {o.lat == null && (
-                    <span className="text-[10px] text-amber-700">GPS du lieu non défini</span>
-                  )}
+                  {o.lat == null && <span className="ml-2 text-amber-700">· GPS non défini</span>}
                   {o.delivered_at && (
-                    <span className="text-[10px] text-blue-700 tabular-nums">
-                      {format(new Date(o.delivered_at), "HH:mm")}
-                    </span>
+                    <span className="ml-2 text-blue-700 tabular-nums">· {format(new Date(o.delivered_at), "HH:mm")}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setExpandedId(o.id)}
+                    className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-semibold bg-muted hover:bg-muted/70 text-foreground transition-colors"
+                  >
+                    Développer
+                  </button>
+                  {!o.delivered_at && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!confirm(`Marquer la commande #${o.order_number} comme livrée ?`)) return;
+                        const now = new Date().toISOString();
+                        const { error } = await supabase.from("orders").update({ status: "done", delivered_at: now }).eq("id", o.id);
+                        if (error) { toast.error(error.message); return; }
+                        onSiteRef.current.set(o.location_id, false);
+                        setOrders(curr => curr.map(x => x.id === o.id ? { ...x, status: "done", delivered_at: now } : x));
+                        toast.success("Commande marquée livrée");
+                      }}
+                      className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                    >
+                      ✓ Livrée
+                    </button>
                   )}
                 </div>
               </div>
-              <ul className="mt-3 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-1 text-xs">
-                {o.lines.filter(l => l.quantity > 0).map((l, i) => (
-                  <li key={i} className="flex justify-between border-b border-dashed border-border/60 py-0.5">
-                    <span className="truncate">{l.article_name}</span>
-                    <span className="font-bold tabular-nums">{l.quantity}</span>
-                  </li>
-                ))}
-              </ul>
-              {!o.delivered_at && (
-                <div className="mt-3 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!confirm(`Marquer la commande #${o.order_number} comme livrée ?`)) return;
-                      const now = new Date().toISOString();
-                      const { error } = await supabase.from("orders").update({ status: "done", delivered_at: now }).eq("id", o.id);
-                      if (error) { toast.error(error.message); return; }
-                      onSiteRef.current.set(o.location_id, false);
-                      setOrders(curr => curr.map(x => x.id === o.id ? { ...x, status: "done", delivered_at: now } : x));
-                      toast.success("Commande marquée livrée");
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                  >
-                    ✓ Marquer livrée
-                  </button>
-                </div>
-              )}
             </div>
           );
         })}
