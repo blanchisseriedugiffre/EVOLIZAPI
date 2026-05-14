@@ -340,6 +340,39 @@ function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={containersPromptId !== null} onOpenChange={(o) => { if (!o) { setContainersPromptId(null); setContainersValue(""); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Nbre de chariots ou sacs ?</AlertDialogTitle>
+            <AlertDialogDescription>Saisissez une valeur (3 caractères max) ou ignorez.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <input
+            type="text"
+            maxLength={3}
+            value={containersValue}
+            onChange={(e) => setContainersValue(e.target.value.replace(/[^A-Za-z0-9]/g, "").slice(0, 3))}
+            autoFocus
+            placeholder="ex: 3"
+            className="w-full px-3 py-2 text-center text-lg font-mono rounded-md border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && containersPromptId) {
+                e.preventDefault();
+                finalizeDone(containersPromptId, containersValue.trim() || null);
+              }
+            }}
+          />
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => containersPromptId && finalizeDone(containersPromptId, null)}>
+              Ignorer
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => containersPromptId && finalizeDone(containersPromptId, containersValue.trim() || null)}
+            >
+              Valider
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
