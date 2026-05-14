@@ -281,15 +281,45 @@ function ClientConfig({ client, articles, onSaved }: { client: ClientRow; articl
 
       <div>
         <Label className="mb-2 block">Lieux de livraison ({locations.length}/10)</Label>
+        <p className="text-[11px] text-muted-foreground mb-2">Coordonnées GPS facultatives — utilisées par l'app chauffeur pour détecter l'arrivée et le départ.</p>
         <div className="space-y-2">
           {locations.map(l => (
-            <div key={l.id} className="flex items-center gap-2 bg-muted/50 rounded-md px-2 py-1 text-sm">
-              <Input
-                value={l.name}
-                onChange={e => setLocations(locations.map(x => x.id === l.id ? { ...x, name: e.target.value } : x))}
-                className="flex-1 h-8"
-              />
-              <button type="button" onClick={() => removeLoc(l.id)} className="text-muted-foreground hover:text-destructive"><X className="size-4" /></button>
+            <div key={l.id} className="space-y-1.5 bg-muted/50 rounded-md px-2 py-2 text-sm">
+              <div className="flex items-center gap-2">
+                <Input
+                  value={l.name}
+                  onChange={e => setLocations(locations.map(x => x.id === l.id ? { ...x, name: e.target.value } : x))}
+                  className="flex-1 h-8"
+                  placeholder="Nom du lieu"
+                />
+                <button type="button" onClick={() => removeLoc(l.id)} className="text-muted-foreground hover:text-destructive"><X className="size-4" /></button>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number" step="any" placeholder="Latitude"
+                  value={l.lat ?? ""}
+                  onChange={e => setLocations(locations.map(x => x.id === l.id ? { ...x, lat: e.target.value === "" ? null : Number(e.target.value) } : x))}
+                  className="h-8 text-xs"
+                />
+                <Input
+                  type="number" step="any" placeholder="Longitude"
+                  value={l.lng ?? ""}
+                  onChange={e => setLocations(locations.map(x => x.id === l.id ? { ...x, lng: e.target.value === "" ? null : Number(e.target.value) } : x))}
+                  className="h-8 text-xs"
+                />
+                <Button
+                  type="button" variant="ghost" size="sm" className="text-xs whitespace-nowrap"
+                  onClick={() => {
+                    if (!("geolocation" in navigator)) return toast.error("GPS indisponible");
+                    navigator.geolocation.getCurrentPosition(
+                      (p) => setLocations(curr => curr.map(x => x.id === l.id ? { ...x, lat: p.coords.latitude, lng: p.coords.longitude } : x)),
+                      (err) => toast.error(err.message || "Position indisponible"),
+                      { enableHighAccuracy: true, timeout: 15000 },
+                    );
+                  }}
+                  title="Utiliser ma position actuelle"
+                >📍 Ici</Button>
+              </div>
             </div>
           ))}
           <div className="flex gap-2">
