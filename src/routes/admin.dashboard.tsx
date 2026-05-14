@@ -240,6 +240,25 @@ function Dashboard() {
           </table>
         </div>
       </div>
+      <AlertDialog open={editConfirmId !== null} onOpenChange={(o) => !o && setEditConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Modifier la commande</AlertDialogTitle>
+            <AlertDialogDescription>Êtes-vous sûr de vouloir modifier la commande ?</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (editConfirmId) navigate({ to: "/admin/new-order", search: { orderId: editConfirmId } });
+                setEditConfirmId(null);
+              }}
+            >
+              Modifier
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
