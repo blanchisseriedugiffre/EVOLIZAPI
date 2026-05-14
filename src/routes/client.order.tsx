@@ -58,7 +58,7 @@ function NewOrder() {
     (async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("id, status, location_id, delivery_date, client_id, order_lines(article_id, quantity)")
+        .select("id, status, location_id, delivery_date, client_id, note, order_lines(article_id, quantity)")
         .eq("id", editId)
         .maybeSingle();
       if (error || !data) { toast.error("Commande introuvable"); navigate({ to: "/client/history" }); return; }
@@ -66,6 +66,7 @@ function NewOrder() {
       if (data.status !== "todo") { toast.error("Cette commande n'est plus modifiable"); navigate({ to: "/client/history" }); return; }
       setLocationId(data.location_id);
       setDate(data.delivery_date);
+      setExistingNote((data as any).note ?? null);
       const q: Record<string, number> = {};
       for (const l of (data.order_lines ?? []) as any[]) q[l.article_id] = l.quantity;
       setQty(q);
