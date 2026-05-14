@@ -14,6 +14,7 @@ import { Route as DriverRouteImport } from './routes/driver'
 import { Route as ClientRouteImport } from './routes/client'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DriverTodayRouteImport } from './routes/driver.today'
 import { Route as ClientOrderRouteImport } from './routes/client.order'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -47,6 +48,11 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const DriverTodayRoute = DriverTodayRouteImport.update({
+  id: '/today',
+  path: '/today',
+  getParentRoute: () => DriverRoute,
 } as any)
 const ClientOrderRoute = ClientOrderRouteImport.update({
   id: '/order',
@@ -93,7 +99,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/client': typeof ClientRouteWithChildren
-  '/driver': typeof DriverRoute
+  '/driver': typeof DriverRouteWithChildren
   '/login': typeof LoginRoute
   '/admin/archives': typeof AdminArchivesRoute
   '/admin/catalog': typeof AdminCatalogRoute
@@ -103,12 +109,13 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
+  '/driver/today': typeof DriverTodayRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/client': typeof ClientRouteWithChildren
-  '/driver': typeof DriverRoute
+  '/driver': typeof DriverRouteWithChildren
   '/login': typeof LoginRoute
   '/admin/archives': typeof AdminArchivesRoute
   '/admin/catalog': typeof AdminCatalogRoute
@@ -118,13 +125,14 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
+  '/driver/today': typeof DriverTodayRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRouteWithChildren
   '/client': typeof ClientRouteWithChildren
-  '/driver': typeof DriverRoute
+  '/driver': typeof DriverRouteWithChildren
   '/login': typeof LoginRoute
   '/admin/archives': typeof AdminArchivesRoute
   '/admin/catalog': typeof AdminCatalogRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
+  '/driver/today': typeof DriverTodayRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -151,6 +160,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/client/history'
     | '/client/order'
+    | '/driver/today'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -166,6 +176,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/client/history'
     | '/client/order'
+    | '/driver/today'
   id:
     | '__root__'
     | '/'
@@ -181,13 +192,14 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/client/history'
     | '/client/order'
+    | '/driver/today'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRouteWithChildren
   ClientRoute: typeof ClientRouteWithChildren
-  DriverRoute: typeof DriverRoute
+  DriverRoute: typeof DriverRouteWithChildren
   LoginRoute: typeof LoginRoute
 }
 
@@ -227,6 +239,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/driver/today': {
+      id: '/driver/today'
+      path: '/today'
+      fullPath: '/driver/today'
+      preLoaderRoute: typeof DriverTodayRouteImport
+      parentRoute: typeof DriverRoute
     }
     '/client/order': {
       id: '/client/order'
@@ -320,11 +339,22 @@ const ClientRouteChildren: ClientRouteChildren = {
 const ClientRouteWithChildren =
   ClientRoute._addFileChildren(ClientRouteChildren)
 
+interface DriverRouteChildren {
+  DriverTodayRoute: typeof DriverTodayRoute
+}
+
+const DriverRouteChildren: DriverRouteChildren = {
+  DriverTodayRoute: DriverTodayRoute,
+}
+
+const DriverRouteWithChildren =
+  DriverRoute._addFileChildren(DriverRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRouteWithChildren,
   ClientRoute: ClientRouteWithChildren,
-  DriverRoute: DriverRoute,
+  DriverRoute: DriverRouteWithChildren,
   LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
