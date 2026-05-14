@@ -39,7 +39,7 @@ function ClientsAdmin() {
     if (!ids.length) { setClients([]); return; }
     const [{ data: profs }, { data: locs }, { data: days }, { data: cArts }, { data: arts }] = await Promise.all([
       supabase.from("profiles").select("id, name, email, logo_url").in("id", ids),
-      supabase.from("delivery_locations").select("id, client_id, name").in("client_id", ids),
+      supabase.from("delivery_locations").select("id, client_id, name, lat, lng").in("client_id", ids),
       supabase.from("client_delivery_days").select("client_id, day_of_week").in("client_id", ids),
       supabase.from("client_articles").select("client_id, article_id").in("client_id", ids),
       supabase.from("articles").select("id, name").order("name"),
