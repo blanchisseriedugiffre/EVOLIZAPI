@@ -186,7 +186,7 @@ function Dashboard() {
 
     const style = document.createElement("style");
     style.id = "print-ticket-style";
-    style.textContent = `@media screen{#print-ticket-root{display:none!important}}@media print{@page{size:80mm auto;margin:2mm}html,body{background:#fff!important;margin:0!important;padding:0!important;height:auto!important;min-height:0!important;overflow:hidden!important}body>*{display:none!important}body>#print-ticket-root{display:block!important;position:static!important;margin:0!important;padding:0!important;width:76mm!important;height:auto!important;page-break-after:avoid!important;break-after:avoid!important;page-break-inside:avoid!important;break-inside:avoid!important}#print-ticket-root *{page-break-inside:avoid!important;break-inside:avoid!important;box-shadow:none!important}}`;
+    style.textContent = `@media screen{#print-ticket-root{display:none!important}}@media print{@page{size:80mm auto;margin:4mm}html,body{background:#fff!important;margin:0!important;padding:0!important;height:auto!important;min-height:0!important;overflow:hidden!important}body>*{display:none!important}body>#print-ticket-root{display:block!important;position:static!important;margin:0!important;padding:0!important;width:72mm!important;height:auto!important;page-break-after:avoid!important;break-after:avoid!important;page-break-inside:avoid!important;break-inside:avoid!important}#print-ticket-root *{page-break-inside:avoid!important;break-inside:avoid!important;box-shadow:none!important}}`;
 
     const root = document.createElement("div");
     root.id = "print-ticket-root";
