@@ -261,9 +261,9 @@ function Dashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {loading && <tr><td colSpan={4 + articles.length} className="py-12 text-center text-muted-foreground">Chargement…</td></tr>}
+              {loading && <tr><td colSpan={3 + articles.length} className="py-12 text-center text-muted-foreground">Chargement…</td></tr>}
               {!loading && visible.length === 0 && (
-                <tr><td colSpan={4 + articles.length} className="py-12 text-center text-muted-foreground">Aucune commande.</td></tr>
+                <tr><td colSpan={3 + articles.length} className="py-12 text-center text-muted-foreground">Aucune commande.</td></tr>
               )}
               {visible.map(r => {
                 const qtyByArt = new Map(r.lines.map(l => [l.article_id, l.quantity]));
