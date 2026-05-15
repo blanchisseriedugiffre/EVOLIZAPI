@@ -249,7 +249,7 @@ function Dashboard() {
               <tr className="bg-muted/50 border-b border-border">
                 <th className="py-3 px-2 w-20 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date livr.</th>
                 <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Client / Lieu</th>
-                
+                <th className="py-2 px-0 w-7 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center"></th>
                 {articles.map(a => (
                   <th key={a.id} className="py-2 px-0 w-7 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center align-bottom" title={a.name}>
                     <div className="inline-block whitespace-nowrap [writing-mode:vertical-rl] rotate-180 leading-tight">
