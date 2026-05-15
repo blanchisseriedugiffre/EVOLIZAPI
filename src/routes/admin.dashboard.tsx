@@ -156,10 +156,7 @@ function Dashboard() {
     }
   }
 
-  function printOrder(r: Row) {
-    const printedStatus: OrderStatus = "in_progress";
-    if (r.status !== printedStatus) setStatus(r.id, printedStatus);
-
+  function buildTicketHtml(r: Row, printedStatus: OrderStatus) {
     const dateLivr = format(new Date(r.delivery_date), "EEEE d MMMM yyyy", { locale: fr });
     const dateCmd = format(new Date(r.created_at), "d MMM yyyy 'à' HH:mm", { locale: fr });
     const lines = r.lines
@@ -167,7 +164,7 @@ function Dashboard() {
       .map(l => `<tr><td style="padding:7px 6px;border-bottom:1px dashed #999;font-weight:bold">${escapeHtml(l.article_name)}</td><td style="padding:7px 6px;border-bottom:1px dashed #999;text-align:right;font-weight:bold">${escapeHtml(l.quantity)}</td></tr>`)
       .join("");
     const noteHtml = r.note ? `<div style="margin-top:8px;padding:6px;border:1px dashed #000"><b>Note:</b> ${escapeHtml(r.note)}</div>` : "";
-    const ticketHtml = `<div style="font-family:-apple-system,system-ui,sans-serif;font-size:12px;color:#000;margin:0;padding:2px;width:76mm;background:#fff">
+    return `<div style="font-family:-apple-system,system-ui,sans-serif;font-size:12px;color:#000;margin:0;padding:2px;width:72mm;background:#fff;box-sizing:border-box">
   <h1 style="font-size:16px;margin:0 0 6px;text-align:center">Commande #${escapeHtml(r.order_number)}</h1>
   <hr/>
   <div style="margin:2px 0"><span style="font-weight:600;text-transform:uppercase;font-size:10px;color:#444">Lieu:</span> <b style="font-size:21px">${escapeHtml(r.location_name)}</b></div>
@@ -176,11 +173,17 @@ function Dashboard() {
   <div style="margin:2px 0"><span style="font-weight:600;text-transform:uppercase;font-size:10px;color:#444">Commandé le:</span> ${escapeHtml(dateCmd)}</div>
   <div style="margin:2px 0"><span style="font-weight:600;text-transform:uppercase;font-size:10px;color:#444">Statut:</span> ${escapeHtml(STATUS_LABEL[printedStatus])}</div>
   ${noteHtml}
-  <table style="width:100%;border-collapse:collapse;margin-top:8px">
-    <thead><tr><th style="text-align:left;padding:4px 6px;border-bottom:2px solid #000;font-size:11px">Article</th><th style="text-align:right;padding:4px 6px;border-bottom:2px solid #000;font-size:11px">Qté</th></tr></thead>
+  <table style="width:100%;border-collapse:collapse;margin-top:8px;table-layout:fixed">
+    <thead><tr><th style="text-align:left;padding:4px 6px;border-bottom:2px solid #000;font-size:11px">Article</th><th style="text-align:right;padding:4px 6px;border-bottom:2px solid #000;font-size:11px;width:14mm">Qté</th></tr></thead>
     <tbody>${lines || '<tr><td colspan="2" style="padding:6px;text-align:center;color:#666">Aucun article</td></tr>'}</tbody>
   </table>
 </div>`;
+  }
+
+  function doPrint(r: Row) {
+    const printedStatus: OrderStatus = "in_progress";
+    if (r.status !== printedStatus) setStatus(r.id, printedStatus);
+    const ticketHtml = buildTicketHtml(r, printedStatus);
 
     document.getElementById("print-ticket-root")?.remove();
     document.getElementById("print-ticket-style")?.remove();
@@ -210,6 +213,10 @@ function Dashboard() {
       cleanup();
       toast.error("Impossible de lancer l'impression");
     }
+  }
+
+  function printOrder(r: Row) {
+    setPreviewRow(r);
   }
 
   async function archiveOrder(id: string) {
