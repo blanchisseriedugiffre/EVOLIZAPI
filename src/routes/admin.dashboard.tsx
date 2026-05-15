@@ -412,6 +412,40 @@ function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <AlertDialog open={previewRow !== null} onOpenChange={(o) => !o && setPreviewRow(null)}>
+        <AlertDialogContent className="max-w-[95vw] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Aperçu avant impression</AlertDialogTitle>
+            <AlertDialogDescription>
+              Largeur réelle 72 mm · papier 80 mm. Vérifiez l'alignement de la colonne Qté.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="bg-muted/40 rounded-md p-3 overflow-auto max-h-[60vh] flex justify-center">
+            <div style={{ width: "72mm" }} className="shadow ring-1 ring-black/10">
+              {/* Règle graduée */}
+              <div style={{ width: "72mm", height: "14px", position: "relative", background: "repeating-linear-gradient(to right, #888 0, #888 1px, transparent 1px, transparent calc(72mm/72))" }} aria-hidden>
+                <div style={{ position: "absolute", left: 0, top: 0, fontSize: 9, color: "#555", paddingLeft: 2 }}>0</div>
+                <div style={{ position: "absolute", right: 0, top: 0, fontSize: 9, color: "#555", paddingRight: 2 }}>72mm</div>
+              </div>
+              {previewRow && (
+                <div dangerouslySetInnerHTML={{ __html: buildTicketHtml(previewRow, "in_progress") }} />
+              )}
+            </div>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Fermer</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                const r = previewRow;
+                setPreviewRow(null);
+                if (r) setTimeout(() => doPrint(r), 100);
+              }}
+            >
+              Imprimer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
