@@ -239,7 +239,7 @@ function Dashboard() {
           <table className="w-full text-left border-collapse text-sm table-fixed">
             <thead>
               <tr className="bg-muted/50 border-b border-border">
-                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date livr.</th>
+                <th className="py-3 px-2 w-20 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date livr.</th>
                 <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Client / Lieu</th>
                 <th className="py-3 px-1 w-12 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">N°</th>
                 {articles.map(a => (
@@ -269,7 +269,7 @@ function Dashboard() {
                       <div className="text-xs text-muted-foreground">{r.client_name}</div>
                     </td>
                     <td className="py-3 px-1 font-mono text-[10px] text-muted-foreground align-top whitespace-nowrap">
-                      <div>#{r.order_number}{r.note && <span className="ml-1 inline-block"><AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} /></span>}</div>
+                      <div className="flex items-center gap-1">#{r.order_number}{r.note && <AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} />}</div>
                       <div className="text-[9px] mt-0.5">{format(new Date(r.created_at), "d MMM yy", { locale: fr })}</div>
                       <div className="text-[9px]">{format(new Date(r.created_at), "HH:mm")}</div>
                     </td>
