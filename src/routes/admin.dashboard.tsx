@@ -58,7 +58,15 @@ function Dashboard() {
         .order("created_at", { ascending: true }),
       supabase.from("articles").select("id, name").order("name"),
     ]);
-    setArticles(arts ?? []);
+    const sorted = [...(arts ?? [])];
+    const seIdx = sorted.findIndex(a => a.name === "SE");
+    const dbIdx = sorted.findIndex(a => a.name === "DB");
+    if (seIdx !== -1 && dbIdx !== -1 && seIdx !== dbIdx + 1) {
+      const [se] = sorted.splice(seIdx, 1);
+      const newDbIdx = sorted.findIndex(a => a.name === "DB");
+      sorted.splice(newDbIdx + 1, 0, se);
+    }
+    setArticles(sorted);
     setRows(
       (o ?? []).map((r: any) => ({
         id: r.id,
