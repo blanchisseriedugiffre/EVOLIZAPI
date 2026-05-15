@@ -275,8 +275,11 @@ function Dashboard() {
                     <td className="py-3 px-4 align-top">
                       <div className="font-bold">{r.location_name}</div>
                       <div className="text-xs text-muted-foreground">{r.client_name}</div>
-                      <div className="font-mono text-[10px] text-muted-foreground whitespace-nowrap flex items-center gap-1">#{r.order_number}{r.note && <AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} />}</div>
+                      <div className="font-mono text-[10px] text-muted-foreground whitespace-nowrap">#{r.order_number}</div>
                       <div className="font-mono text-[9px] text-muted-foreground">{format(new Date(r.created_at), "d MMM yy", { locale: fr })} {format(new Date(r.created_at), "HH:mm")}</div>
+                    </td>
+                    <td className="py-3 px-0 align-middle text-center">
+                      {r.note && <AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} />}
                     </td>
                     {articles.map(a => (
                       <td key={a.id} className="py-3 px-0 text-center align-top tabular-nums text-sm">
