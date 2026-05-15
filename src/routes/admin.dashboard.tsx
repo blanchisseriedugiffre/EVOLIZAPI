@@ -249,7 +249,7 @@ function Dashboard() {
               <tr className="bg-muted/50 border-b border-border">
                 <th className="py-3 px-2 w-20 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date livr.</th>
                 <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Client / Lieu</th>
-                <th className="py-3 px-1 w-12 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">N°</th>
+                
                 {articles.map(a => (
                   <th key={a.id} className="py-2 px-0 w-7 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center align-bottom" title={a.name}>
                     <div className="inline-block whitespace-nowrap [writing-mode:vertical-rl] rotate-180 leading-tight">
@@ -261,9 +261,9 @@ function Dashboard() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {loading && <tr><td colSpan={4 + articles.length} className="py-12 text-center text-muted-foreground">Chargement…</td></tr>}
+              {loading && <tr><td colSpan={3 + articles.length} className="py-12 text-center text-muted-foreground">Chargement…</td></tr>}
               {!loading && visible.length === 0 && (
-                <tr><td colSpan={4 + articles.length} className="py-12 text-center text-muted-foreground">Aucune commande.</td></tr>
+                <tr><td colSpan={3 + articles.length} className="py-12 text-center text-muted-foreground">Aucune commande.</td></tr>
               )}
               {visible.map(r => {
                 const qtyByArt = new Map(r.lines.map(l => [l.article_id, l.quantity]));
@@ -275,11 +275,8 @@ function Dashboard() {
                     <td className="py-3 px-4 align-top">
                       <div className="font-bold">{r.location_name}</div>
                       <div className="text-xs text-muted-foreground">{r.client_name}</div>
-                    </td>
-                    <td className="py-3 px-1 font-mono text-[10px] text-muted-foreground align-top whitespace-nowrap">
-                      <div className="flex items-center gap-1">#{r.order_number}{r.note && <AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} />}</div>
-                      <div className="text-[9px] mt-0.5">{format(new Date(r.created_at), "d MMM yy", { locale: fr })}</div>
-                      <div className="text-[9px]">{format(new Date(r.created_at), "HH:mm")}</div>
+                      <div className="font-mono text-[10px] text-muted-foreground whitespace-nowrap flex items-center gap-1">#{r.order_number}{r.note && <AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} />}</div>
+                      <div className="font-mono text-[9px] text-muted-foreground">{format(new Date(r.created_at), "d MMM yy", { locale: fr })} {format(new Date(r.created_at), "HH:mm")}</div>
                     </td>
                     {articles.map(a => (
                       <td key={a.id} className="py-3 px-0 text-center align-top tabular-nums text-sm">
