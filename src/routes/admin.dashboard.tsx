@@ -236,15 +236,17 @@ function Dashboard() {
 
       <div className="overflow-hidden rounded-xl ring-1 ring-black/5 shadow-sm bg-card">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-sm">
+          <table className="w-full text-left border-collapse text-sm table-fixed">
             <thead>
               <tr className="bg-muted/50 border-b border-border">
                 <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Date livr.</th>
                 <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Client / Lieu</th>
-                <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">N°</th>
+                <th className="py-3 px-1 w-12 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">N°</th>
                 {articles.map(a => (
-                  <th key={a.id} className="py-3 px-2 w-14 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center leading-tight break-words" title={a.name}>
-                    {a.name.split(" ").slice(0, 2).join(" ")}
+                  <th key={a.id} className="py-2 px-0 w-7 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center align-bottom" title={a.name}>
+                    <div className="inline-block whitespace-nowrap [writing-mode:vertical-rl] rotate-180 leading-tight">
+                      {a.name}
+                    </div>
                   </th>
                 ))}
                 <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-right">Statut</th>
