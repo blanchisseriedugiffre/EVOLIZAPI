@@ -48,6 +48,9 @@ function Dashboard() {
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
   const [loading, setLoading] = useState(true);
 
+  // Largeur dynamique des colonnes articles
+  const colWidth = Math.max(28, Math.min(56, 420 / Math.max(articles.length, 1)));
+
   async function load() {
     const [{ data: o }, { data: arts }] = await Promise.all([
       supabase
@@ -251,7 +254,7 @@ function Dashboard() {
                 <th className="py-3 px-4 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Client / Lieu</th>
                 <th className="py-2 px-0 w-7 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center"></th>
                 {articles.map(a => (
-                  <th key={a.id} className="py-2 px-0 w-7 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center align-bottom" title={a.name}>
+                  <th key={a.id} style={{ width: `${colWidth}px` }} className="py-2 px-0 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground text-center align-bottom" title={a.name}>
                     <div className="inline-block whitespace-nowrap [writing-mode:vertical-rl] rotate-180 leading-tight">
                       {a.name}
                     </div>
@@ -281,7 +284,7 @@ function Dashboard() {
                       {r.note && <AdminNoteCell orderId={r.id} note={r.note} seen={r.note_seen_by_admin} />}
                     </td>
                     {articles.map(a => (
-                      <td key={a.id} className="py-3 px-0 text-center align-top tabular-nums text-sm">
+                      <td key={a.id} style={{ width: `${colWidth}px` }} className="py-3 px-0 text-center align-top tabular-nums text-sm">
                         {qtyByArt.get(a.id) ?? <span className="text-muted-foreground/40">·</span>}
                       </td>
                     ))}

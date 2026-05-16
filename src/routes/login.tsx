@@ -48,7 +48,7 @@ function LoginPage() {
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
       <div className="flex flex-col items-center justify-center gap-8 p-8 lg:p-12 bg-background border-b lg:border-b-0 lg:border-r border-border">
         <img
-          src="/camion2T.jpg"
+          src="/camion-livraison.jpg"
           alt="Camion de livraison Blanchisserie du Giffre"
           className="w-full max-w-xl rounded-2xl shadow-lg object-cover"
         />
