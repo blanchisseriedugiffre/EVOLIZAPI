@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { STATUS_LABEL, STATUS_NEXT, STATUS_ROW_CLASS, STATUS_BADGE_CLASS, type OrderStatus } from "@/lib/orders";
@@ -8,6 +8,8 @@ import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { AdminNoteCell } from "@/components/NoteDialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { syncEvolizDeliveries } from "@/lib/evoliz.functions";
 
 export const Route = createFileRoute("/admin/dashboard")({
   component: Dashboard,
@@ -26,6 +28,13 @@ interface Row {
   note: string | null;
   note_seen_by_admin: boolean;
   lines: { article_id: string; article_name: string; quantity: number }[];
+}
+
+interface EvolizDelivery {
+  bl_number: string | number;
+  client_name: string;
+  client_code: string | null;
+  date: string;
 }
 
 function escapeHtml(value: string | number | null | undefined) {
@@ -47,6 +56,11 @@ function Dashboard() {
   const [articles, setArticles] = useState<{ id: string; name: string }[]>([]);
   const [filter, setFilter] = useState<"all" | OrderStatus>("all");
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [evolizDeliveries, setEvolizDeliveries] = useState<EvolizDelivery[]>([]);
+  const [showEvoliz, setShowEvoliz] = useState(false);
+
+  const syncFn = useServerFn(syncEvolizDeliveries);
 
   // Largeur dynamique des colonnes articles
   const colWidth = Math.max(28, Math.min(56, 420 / Math.max(articles.length, 1)));
@@ -233,6 +247,25 @@ function Dashboard() {
           <span className="inline-flex items-center gap-2 text-xs text-muted-foreground">
             <span className="size-2 rounded-full bg-emerald-500 animate-pulse" /> En direct
           </span>
+          <button
+            onClick={async () => {
+              try {
+                setSyncing(true);
+                const result = await syncFn({});
+                toast.success(`${result.count} BL Evoliz récupéré(s) pour le ${result.date}`);
+                setEvolizDeliveries(result.deliveries);
+                setShowEvoliz(true);
+              } catch (e: any) {
+                toast.error(e?.message ?? "Erreur synchronisation Evoliz");
+              } finally {
+                setSyncing(false);
+              }
+            }}
+            disabled={syncing}
+            className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-semibold bg-amber-500 text-white hover:bg-amber-600 disabled:opacity-50"
+          >
+            {syncing ? "Sync…" : "🔄 Sync Evoliz"}
+          </button>
           <Select value={filter} onValueChange={(v) => setFilter(v as any)}>
             <SelectTrigger className="w-40 h-9 text-xs"><SelectValue /></SelectTrigger>
             <SelectContent>
@@ -244,6 +277,31 @@ function Dashboard() {
           </Select>
         </div>
       </div>
+
+      {/* Panneau BL Evoliz */}
+      {showEvoliz && evolizDeliveries.length > 0 && (
+        <div className="rounded-xl ring-1 ring-amber-200 bg-amber-50 p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-amber-900">BL Evoliz du jour ({evolizDeliveries.length})</h2>
+            <button onClick={() => setShowEvoliz(false)} className="text-xs text-amber-700 hover:underline">Fermer</button>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {evolizDeliveries.map((d, i) => (
+              <div key={i} className="rounded-md bg-white ring-1 ring-amber-200 px-3 py-2 text-xs">
+                <div className="font-bold text-amber-900">BL #{d.bl_number}</div>
+                <div className="text-muted-foreground truncate">{d.client_name}</div>
+                {d.client_code && <div className="text-[10px] text-muted-foreground/60">Code: {d.client_code}</div>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {showEvoliz && evolizDeliveries.length === 0 && (
+        <div className="rounded-xl ring-1 ring-amber-200 bg-amber-50 p-4 text-sm text-amber-800 text-center">
+          Aucun BL Evoliz pour aujourd'hui.
+        </div>
+      )}
 
       <div className="overflow-hidden rounded-xl ring-1 ring-black/5 shadow-sm bg-card">
         <div className="overflow-x-auto">
