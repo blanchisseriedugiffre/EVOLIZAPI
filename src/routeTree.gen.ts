@@ -16,6 +16,7 @@ import { Route as AdminRouteImport } from './routes/admin'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DriverIndexRouteImport } from './routes/driver.index'
 import { Route as DriverTodayRouteImport } from './routes/driver.today'
+import { Route as DriverItineraireRouteImport } from './routes/driver.itineraire'
 import { Route as ClientOrderRouteImport } from './routes/client.order'
 import { Route as ClientHistoryRouteImport } from './routes/client.history'
 import { Route as AdminSettingsRouteImport } from './routes/admin.settings'
@@ -59,6 +60,11 @@ const DriverIndexRoute = DriverIndexRouteImport.update({
 const DriverTodayRoute = DriverTodayRouteImport.update({
   id: '/today',
   path: '/today',
+  getParentRoute: () => DriverRoute,
+} as any)
+const DriverItineraireRoute = DriverItineraireRouteImport.update({
+  id: '/itineraire',
+  path: '/itineraire',
   getParentRoute: () => DriverRoute,
 } as any)
 const ClientOrderRoute = ClientOrderRouteImport.update({
@@ -122,6 +128,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AdminSettingsRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
+  '/driver/itineraire': typeof DriverItineraireRoute
   '/driver/today': typeof DriverTodayRoute
   '/driver/': typeof DriverIndexRoute
 }
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AdminSettingsRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
+  '/driver/itineraire': typeof DriverItineraireRoute
   '/driver/today': typeof DriverTodayRoute
   '/driver': typeof DriverIndexRoute
 }
@@ -158,6 +166,7 @@ export interface FileRoutesById {
   '/admin/settings': typeof AdminSettingsRoute
   '/client/history': typeof ClientHistoryRoute
   '/client/order': typeof ClientOrderRoute
+  '/driver/itineraire': typeof DriverItineraireRoute
   '/driver/today': typeof DriverTodayRoute
   '/driver/': typeof DriverIndexRoute
 }
@@ -178,6 +187,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/client/history'
     | '/client/order'
+    | '/driver/itineraire'
     | '/driver/today'
     | '/driver/'
   fileRoutesByTo: FileRoutesByTo
@@ -195,6 +205,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/client/history'
     | '/client/order'
+    | '/driver/itineraire'
     | '/driver/today'
     | '/driver'
   id:
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/client/history'
     | '/client/order'
+    | '/driver/itineraire'
     | '/driver/today'
     | '/driver/'
   fileRoutesById: FileRoutesById
@@ -274,6 +286,13 @@ declare module '@tanstack/react-router' {
       path: '/today'
       fullPath: '/driver/today'
       preLoaderRoute: typeof DriverTodayRouteImport
+      parentRoute: typeof DriverRoute
+    }
+    '/driver/itineraire': {
+      id: '/driver/itineraire'
+      path: '/itineraire'
+      fullPath: '/driver/itineraire'
+      preLoaderRoute: typeof DriverItineraireRouteImport
       parentRoute: typeof DriverRoute
     }
     '/client/order': {
@@ -378,11 +397,13 @@ const ClientRouteWithChildren =
   ClientRoute._addFileChildren(ClientRouteChildren)
 
 interface DriverRouteChildren {
+  DriverItineraireRoute: typeof DriverItineraireRoute
   DriverTodayRoute: typeof DriverTodayRoute
   DriverIndexRoute: typeof DriverIndexRoute
 }
 
 const DriverRouteChildren: DriverRouteChildren = {
+  DriverItineraireRoute: DriverItineraireRoute,
   DriverTodayRoute: DriverTodayRoute,
   DriverIndexRoute: DriverIndexRoute,
 }
@@ -400,3 +421,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

@@ -14,7 +14,13 @@ function DriverLayout() {
   if (role === "admin") return <Navigate to="/admin/dashboard" />;
   if (role === "client") return <Navigate to="/client/order" />;
   return (
-    <AppShell title="Chauffeur" nav={[{ label: "Tournée du jour", to: "/driver/today" }]}>
+    <AppShell
+      title="Chauffeur"
+      nav={[
+        { label: "Tournée du jour", to: "/driver/today" },
+        { label: "Itinéraire", to: "/driver/itineraire" },
+      ]}
+    >
       <Outlet />
     </AppShell>
   );
