@@ -5,6 +5,7 @@ import { format } from "date-fns";
 
 const EVOLIZ_LOGIN_URL = "https://www.evoliz.io/api/login";
 const EVOLIZ_API_URL = "https://www.evoliz.io/api/v1/companies";
+
 async function getEvolizToken(): Promise<string> {
   const companyId = process.env.EVOLIZ_COMPANY_ID;
   const publicKey = process.env.EVOLIZ_PUBLIC_KEY;
@@ -34,7 +35,6 @@ async function getEvolizToken(): Promise<string> {
 export const syncEvolizDeliveries = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    // Vérifier que l'utilisateur est admin
     const { data: roleRow } = await supabaseAdmin
       .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
     if (!roleRow) throw new Error("Forbidden");
@@ -42,11 +42,9 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
     const companyId = process.env.EVOLIZ_COMPANY_ID;
     const today = format(new Date(), "yyyy-MM-dd");
 
-    // 1. Obtenir le token Evoliz
     const token = await getEvolizToken();
 
-    // 2. Récupérer les BL du jour
-    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?documentdate=${today}&per_page=100`;  // ✅ Corrigé
+    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?documentdate=${today}&per_page=100`;
     const response = await fetch(url, {
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -62,7 +60,6 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
     const data = await response.json() as { data?: any[] };
     const deliveries = data.data ?? [];
 
-    // 3. Extraire nom client + numéro BL
     const result = deliveries.map((d: any) => ({
       bl_number: d.document_number ?? d.documentnumber ?? d.id,
       client_name: d.client?.name ?? d.clientname ?? "—",
