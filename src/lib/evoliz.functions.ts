@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { format } from "date-fns";
 
 const EVOLIZ_LOGIN_URL = "https://www.evoliz.io/api/login";
-const EVOLIZ_API_URL = "https://www.evoliz.io/api";
+const EVOLIZ_API_URL = "https://www.evoliz.io/api/v1/companies";  // ✅ Corrigé
 
 async function getEvolizToken(): Promise<string> {
   const companyId = process.env.EVOLIZ_COMPANY_ID;
@@ -47,7 +47,7 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
     const token = await getEvolizToken();
 
     // 2. Récupérer les BL du jour
-    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?documentdate=${today}&per_page=100`;
+    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?documentdate=${today}&per_page=100`;  // ✅ Corrigé
     const response = await fetch(url, {
       headers: {
         "Authorization": `Bearer ${token}`,
