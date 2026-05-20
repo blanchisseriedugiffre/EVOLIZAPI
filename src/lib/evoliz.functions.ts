@@ -67,7 +67,7 @@ async function fetchTodayBL(companyId: string, token: string, today: string) {
   }));
 }
 
-export const fetchEvolizBLToday = createServerFn({ method: "GET" })
+export const fetchEvolizBLToday = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async () => {
     const companyId = process.env.EVOLIZ_COMPANY_ID!;
