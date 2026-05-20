@@ -4,7 +4,7 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { format } from "date-fns";
 
 const EVOLIZ_LOGIN_URL = "https://www.evoliz.io/api/login";
-const EVOLIZ_API_URL = "https://www.evoliz.io/api";
+const EVOLIZ_API_URL = "const EVOLIZ_API_URL = "https://www.evoliz.io/api/v1/companies";";
 
 async function getEvolizToken(): Promise<string> {
   const companyId = process.env.EVOLIZ_COMPANY_ID;

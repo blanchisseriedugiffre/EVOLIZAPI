@@ -140,6 +140,8 @@ function NewOrder() {
   async function remove() {
     if (!editId) return;
     if (!confirm("Supprimer cette commande ?")) return;
+    const { error: eLinesDelete } = await supabase.from("order_lines").delete().eq("order_id", editId);
+    if (eLinesDelete) return toast.error(eLinesDelete.message);
     const { error } = await supabase.from("orders").delete().eq("id", editId);
     if (error) return toast.error(error.message);
     toast.success("Commande supprimée");
