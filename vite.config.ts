@@ -15,11 +15,19 @@ export default defineConfig(async ({ command, mode }) => {
     envDefine[`import.meta.env.${key}`] = JSON.stringify(value);
   }
 
-  // SUPABASE_URL and SUPABASE_PUBLISHABLE_KEY are not secret (same as VITE_ versions).
-  // Bake them into the SSR bundle so auth middleware works even if process.env is unavailable.
+  // Bake public vars into all bundles (client + server).
   for (const key of ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "EVOLIZ_COMPANY_ID"]) {
     if (allEnv[key]) {
       envDefine[`process.env.${key}`] = JSON.stringify(allEnv[key]);
+    }
+  }
+
+  // Bake server-only secrets into the SSR bundle only.
+  // process.env is an unenv mock in Cloudflare Workers and doesn't receive runtime secrets.
+  const ssrDefine: Record<string, string> = {};
+  for (const key of ["SUPABASE_SERVICE_ROLE_KEY", "EVOLIZ_PUBLIC_KEY", "EVOLIZ_SECRET_KEY"]) {
+    if (allEnv[key]) {
+      ssrDefine[`process.env.${key}`] = JSON.stringify(allEnv[key]);
     }
   }
 
@@ -47,6 +55,9 @@ export default defineConfig(async ({ command, mode }) => {
   return {
     plugins,
     define: envDefine,
+    environments: {
+      ssr: { define: ssrDefine },
+    },
     resolve: {
       alias: { "@": `${process.cwd()}/src` },
       dedupe: [
