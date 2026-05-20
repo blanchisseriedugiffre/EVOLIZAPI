@@ -32,6 +32,20 @@ async function getEvolizToken(): Promise<string> {
   return token;
 }
 
+async function fetchPage(token: string, companyId: string, page: number): Promise<{ items: any[]; lastPage: number }> {
+  const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?per_page=100&page=${page}`;
+  const response = await fetch(url, {
+    headers: { "Authorization": `Bearer ${token}`, "Accept": "application/json" },
+  });
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`Erreur récupération BL: ${response.status} ${text}`);
+  }
+  const data = await response.json() as { data?: any[]; last_page?: number; meta?: { last_page?: number } };
+  const lastPage = data.last_page ?? data.meta?.last_page ?? 1;
+  return { items: data.data ?? [], lastPage };
+}
+
 export const syncEvolizDeliveries = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -39,31 +53,31 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
       .from("user_roles").select("role").eq("user_id", context.userId).eq("role", "admin").maybeSingle();
     if (!roleRow) throw new Error("Forbidden");
 
-    const companyId = process.env.EVOLIZ_COMPANY_ID;
+    const companyId = process.env.EVOLIZ_COMPANY_ID!;
     const today = format(new Date(), "yyyy-MM-dd");
-
     const token = await getEvolizToken();
 
-    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?per_page=100&date_start=${today}`;
-    const response = await fetch(url, {
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Accept": "application/json",
-      },
-    });
+    // Fetch page 1 to know the last page number, then work backwards
+    const { items: firstItems, lastPage } = await fetchPage(token, companyId, 1);
 
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`Erreur récupération BL: ${response.status} ${text}`);
+    let todayItems: any[] = [];
+
+    if (lastPage === 1) {
+      todayItems = firstItems;
+    } else {
+      // Most recent BL are on the last pages — fetch backwards until dates go before today
+      for (let page = lastPage; page >= 1; page--) {
+        const { items } = await fetchPage(token, companyId, page);
+        const matching = items.filter((d: any) => (d.documentdate ?? "").substring(0, 10) === today);
+        todayItems.push(...matching);
+        // If the earliest item on this page is already before today, stop
+        const earliest = items.map((d: any) => (d.documentdate ?? "").substring(0, 10)).filter(Boolean).sort()[0];
+        if (earliest && earliest < today) break;
+        if (page === lastPage && items.length === 0) break;
+      }
     }
 
-    const data = await response.json() as { data?: any[] };
-    const deliveries = (data.data ?? []).filter((d: any) => {
-      const raw = d.documentdate ?? d.document_date ?? d.date;
-      return !raw || raw.substring(0, 10) === today;
-    });
-
-    const result = deliveries.map((d: any) => ({
+    const result = todayItems.map((d: any) => ({
       bl_number: d.document_number ?? d.documentnumber ?? d.id,
       client_name: d.client?.name ?? d.clientname ?? "—",
       client_code: d.client?.code ?? d.clientcode ?? null,
@@ -72,4 +86,3 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
 
     return { deliveries: result, count: result.length, date: today };
   });
-
