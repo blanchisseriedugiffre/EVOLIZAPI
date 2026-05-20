@@ -44,7 +44,7 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
 
     const token = await getEvolizToken();
 
-    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?per_page=100&date_start=${today}&date_end=${today}`;
+    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?per_page=100`;
     const response = await fetch(url, {
       headers: {
         "Authorization": `Bearer ${token}`,
