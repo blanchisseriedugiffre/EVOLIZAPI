@@ -44,7 +44,7 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
 
     const token = await getEvolizToken();
 
-    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?per_page=100`;
+    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?per_page=100&date_start=${today}&date_end=${today}`;
     const response = await fetch(url, {
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -58,7 +58,10 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
     }
 
     const data = await response.json() as { data?: any[] };
-    const deliveries = data.data ?? [];
+    const deliveries = (data.data ?? []).filter((d: any) => {
+      const date = d.documentdate ?? d.document_date;
+      return !date || date === today;
+    });
 
     const result = deliveries.map((d: any) => ({
       bl_number: d.document_number ?? d.documentnumber ?? d.id,
