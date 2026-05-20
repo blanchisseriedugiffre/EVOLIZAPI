@@ -46,6 +46,37 @@ async function fetchPage(token: string, companyId: string, page: number): Promis
   return { items: data.data ?? [], lastPage };
 }
 
+async function fetchTodayBL(companyId: string, token: string, today: string) {
+  const { items: firstItems, lastPage } = await fetchPage(token, companyId, 1);
+  let todayItems: any[] = [];
+  if (lastPage === 1) {
+    todayItems = firstItems;
+  } else {
+    for (let page = lastPage; page >= 1; page--) {
+      const { items } = await fetchPage(token, companyId, page);
+      todayItems.push(...items.filter((d: any) => (d.documentdate ?? "").substring(0, 10) === today));
+      const earliest = items.map((d: any) => (d.documentdate ?? "").substring(0, 10)).filter(Boolean).sort()[0];
+      if (earliest && earliest < today) break;
+    }
+  }
+  return todayItems.map((d: any) => ({
+    bl_number: d.document_number ?? d.documentnumber ?? d.id,
+    client_name: d.client?.name ?? d.clientname ?? "—",
+    client_code: d.client?.code ?? d.clientcode ?? null,
+    date: (d.documentdate ?? today).substring(0, 10),
+  }));
+}
+
+export const fetchEvolizBLToday = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async () => {
+    const companyId = process.env.EVOLIZ_COMPANY_ID!;
+    const today = format(new Date(), "yyyy-MM-dd");
+    const token = await getEvolizToken();
+    const deliveries = await fetchTodayBL(companyId, token, today);
+    return { deliveries, date: today };
+  });
+
 export const syncEvolizDeliveries = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -56,33 +87,6 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
     const companyId = process.env.EVOLIZ_COMPANY_ID!;
     const today = format(new Date(), "yyyy-MM-dd");
     const token = await getEvolizToken();
-
-    // Fetch page 1 to know the last page number, then work backwards
-    const { items: firstItems, lastPage } = await fetchPage(token, companyId, 1);
-
-    let todayItems: any[] = [];
-
-    if (lastPage === 1) {
-      todayItems = firstItems;
-    } else {
-      // Most recent BL are on the last pages — fetch backwards until dates go before today
-      for (let page = lastPage; page >= 1; page--) {
-        const { items } = await fetchPage(token, companyId, page);
-        const matching = items.filter((d: any) => (d.documentdate ?? "").substring(0, 10) === today);
-        todayItems.push(...matching);
-        // If the earliest item on this page is already before today, stop
-        const earliest = items.map((d: any) => (d.documentdate ?? "").substring(0, 10)).filter(Boolean).sort()[0];
-        if (earliest && earliest < today) break;
-        if (page === lastPage && items.length === 0) break;
-      }
-    }
-
-    const result = todayItems.map((d: any) => ({
-      bl_number: d.document_number ?? d.documentnumber ?? d.id,
-      client_name: d.client?.name ?? d.clientname ?? "—",
-      client_code: d.client?.code ?? d.clientcode ?? null,
-      date: (d.documentdate ?? today).substring(0, 10),
-    }));
-
-    return { deliveries: result, count: result.length, date: today };
+    const deliveries = await fetchTodayBL(companyId, token, today);
+    return { deliveries, count: deliveries.length, date: today };
   });

@@ -5,6 +5,8 @@ import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useServerFn } from "@tanstack/react-start";
+import { fetchEvolizBLToday } from "@/lib/evoliz.functions";
 
 export const Route = createFileRoute("/driver/today")({
   component: DriverToday,
@@ -47,6 +49,9 @@ export function DriverToday() {
   const [pos, setPos] = useState<{ lat: number; lng: number; accuracy: number } | null>(null);
   const [geoError, setGeoError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [evolizBL, setEvolizBL] = useState<{ bl_number: string | number; client_name: string; client_code: string | null }[]>([]);
+
+  const fetchBL = useServerFn(fetchEvolizBLToday);
   // Track per-location "currently on site" so we can detect departure
   const onSiteRef = useRef<Map<string, boolean>>(new Map());
 
@@ -79,6 +84,7 @@ export function DriverToday() {
 
   useEffect(() => {
     load();
+    fetchBL({}).then(r => setEvolizBL(r.deliveries)).catch(() => {});
     const ch = supabase
       .channel("driver-orders")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => load())
@@ -182,11 +188,11 @@ export function DriverToday() {
         </div>
       )}
 
-      <div className="grid gap-3">
+      <div className="grid gap-2">
         {sorted.map(o => {
           const dist = pos && o.lat != null && o.lng != null ? distanceMeters(pos, { lat: o.lat, lng: o.lng }) : null;
           return (
-            <div key={o.id} className={`rounded-xl ring-1 ring-black/5 shadow-sm px-4 py-2.5 ${o.delivered_at ? "bg-blue-50" : "bg-card"}`}>
+            <div key={o.id} className={`rounded-xl ring-1 ring-black/5 shadow-sm px-4 py-1 ${o.delivered_at ? "bg-blue-50" : "bg-card"}`}>
               {/* Ligne 1 : Lieu + Note + Statut */}
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-2 min-w-0">
@@ -204,7 +210,7 @@ export function DriverToday() {
                   <button
                     type="button"
                     onClick={() => { setContainersValue(o.containers ?? ""); setContainersEditId(o.id); }}
-                    className="inline-flex items-center justify-center px-2 py-1 min-w-[32px] rounded-md text-[11px] font-bold tabular-nums bg-background ring-1 ring-border text-foreground hover:bg-muted"
+                    className="inline-flex items-center justify-center px-2 py-0.5 min-w-[32px] rounded-md text-[11px] font-bold tabular-nums bg-background ring-1 ring-border text-foreground hover:bg-muted"
                     title="Nbre de chariots/sacs (cliquer pour modifier)"
                   >
                     {o.containers || <span className="text-muted-foreground/50">·</span>}
@@ -213,7 +219,7 @@ export function DriverToday() {
                 </div>
               </div>
               {/* Ligne 2 : Client/#n° · distance · actions */}
-              <div className="mt-1 flex items-center justify-between gap-3">
+              <div className="mt-0.5 flex items-center justify-between gap-3">
                 <div className="text-xs text-muted-foreground truncate">
                   {o.client_name} · #{o.order_number}
                   {dist != null && !o.delivered_at && (
@@ -228,7 +234,7 @@ export function DriverToday() {
                   <button
                     type="button"
                     onClick={() => setExpandedId(o.id)}
-                    className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-semibold bg-muted hover:bg-muted/70 text-foreground transition-colors"
+                    className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-muted hover:bg-muted/70 text-foreground transition-colors"
                   >
                     Développer
                   </button>
@@ -244,7 +250,7 @@ export function DriverToday() {
                         setOrders(curr => curr.map(x => x.id === o.id ? { ...x, status: "done", delivered_at: now } : x));
                         toast.success("Commande marquée livrée");
                       }}
-                      className="inline-flex items-center px-2 py-1 rounded-md text-[11px] font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+                      className="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                     >
                       ✓ Livrée
                     </button>
@@ -255,6 +261,23 @@ export function DriverToday() {
           );
         })}
       </div>
+
+      {evolizBL.length > 0 && (
+        <div>
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            BL Evoliz du jour ({evolizBL.length})
+          </h2>
+          <div className="grid gap-1.5">
+            {evolizBL.map((bl, i) => (
+              <div key={i} className="rounded-lg ring-1 ring-amber-200 bg-amber-50 px-3 py-1 flex items-center justify-between gap-3">
+                <span className="text-xs font-bold text-amber-900">BL #{bl.bl_number}</span>
+                <span className="text-xs text-muted-foreground truncate">{bl.client_name}</span>
+                {bl.client_code && <span className="text-[10px] text-muted-foreground/60 shrink-0">Code: {bl.client_code}</span>}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Dialog open={expandedId !== null} onOpenChange={(o) => { if (!o) setExpandedId(null); }}>
         <DialogContent className="max-w-md">
