@@ -44,7 +44,7 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
 
     const token = await getEvolizToken();
 
-    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?per_page=100`;
+    const url = `${EVOLIZ_API_URL}/${companyId}/deliveries?per_page=100&date_start=${today}`;
     const response = await fetch(url, {
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -58,28 +58,16 @@ export const syncEvolizDeliveries = createServerFn({ method: "POST" })
     }
 
     const data = await response.json() as { data?: any[] };
-
-    // Normalise any date string to yyyy-MM-dd for comparison
-    function toIsoDate(raw: string | undefined): string {
-      if (!raw) return "";
-      if (/^\d{4}-\d{2}-\d{2}/.test(raw)) return raw.substring(0, 10);
-      if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-        const [d, m, y] = raw.split("/");
-        return `${y}-${m}-${d}`;
-      }
-      return raw;
-    }
-
     const deliveries = (data.data ?? []).filter((d: any) => {
       const raw = d.documentdate ?? d.document_date ?? d.date;
-      return !raw || toIsoDate(raw) === today;
+      return !raw || raw.substring(0, 10) === today;
     });
 
     const result = deliveries.map((d: any) => ({
       bl_number: d.document_number ?? d.documentnumber ?? d.id,
       client_name: d.client?.name ?? d.clientname ?? "—",
       client_code: d.client?.code ?? d.clientcode ?? null,
-      date: toIsoDate(d.documentdate ?? d.document_date ?? d.date) || today,
+      date: (d.documentdate ?? today).substring(0, 10),
     }));
 
     return { deliveries: result, count: result.length, date: today };
